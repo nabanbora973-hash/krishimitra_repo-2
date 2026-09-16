@@ -1,0 +1,38 @@
+{
+  "paddy": {
+    "label": "Paddy (Rice)", "season": "Sali / Boro / Ahu", "durationDays": 120,
+    "stages": {"vegetative": [0, 50], "flowering": [50, 75], "grain-filling": [75, 100], "maturity": [100, 120], "harvest": [120, 140]},
+    "rainSensitiveStages": ["flowering", "harvest"],
+    "storageLifeDays": 150, "perishable": false
+  },
+  "tomato": {
+    "label": "Tomato", "season": "Rabi / Kharif", "durationDays": 110,
+    "stages": {"vegetative": [0, 35], "flowering": [35, 60], "fruiting": [60, 85], "harvest": [85, 110]},
+    "rainSensitiveStages": ["fruiting", "harvest"],
+    "storageLifeDays": 6, "perishable": true
+  },
+  "mustard": {
+    "label": "Mustard", "season": "Rabi", "durationDays": 105,
+    "stages": {"vegetative": [0, 40], "flowering": [40, 70], "pod-filling": [70, 95], "harvest": [95, 105]},
+    "rainSensitiveStages": ["harvest"],
+    "storageLifeDays": 180, "perishable": false
+  },
+  "potato": {
+    "label": "Potato", "season": "Rabi", "durationDays": 90,
+    "stages": {"vegetative": [0, 40], "tuberisation": [40, 70], "maturity": [70, 90]},
+    "rainSensitiveStages": ["harvest"],
+    "storageLifeDays": 60, "perishable": true
+  },
+  "brinjal": {
+    "label": "Brinjal", "season": "Year-round", "durationDays": 130,
+    "stages": {"vegetative": [0, 45], "flowering": [45, 70], "fruiting": [70, 130]},
+    "rainSensitiveStages": ["flowering"],
+    "storageLifeDays": 5, "perishable": true
+  },
+  "cabbage": {
+    "label": "Cabbage", "season": "Rabi", "durationDays": 95,
+    "stages": {"vegetative": [0, 45], "head-formation": [45, 80], "harvest": [80, 95]},
+    "rainSensitiveStages": ["harvest"],
+    "storageLifeDays": 20, "perishable": true
+  }
+}

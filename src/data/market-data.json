@@ -1,0 +1,408 @@
+{
+  "asOf": "2026-10-13",
+  "note": "PROTOTYPE dataset for demonstration — structured like Agmarknet price rows. Not live market data. Distances are illustrative prototype values around the demo farm (near Duliajan, Assam). Paddy series mirrors the walkthrough video: Village trader ₹2,050 · Sivasagar ₹2,120 · Dibrugarh ₹2,180 · Tinsukia ₹2,240 · Jorhat ₹2,310 (best), each with 30 days of illustrative daily history so the trend chart and 90/30/7 toggles behave like the video. History is illustrative DEMO data; LIVE price history builds day-by-day from the government feed.",
+  "markets": [
+    {
+      "id": "villagetrader",
+      "name": "Village trader",
+      "distanceKm": 3,
+      "crops": {
+        "paddy": {
+          "today": 2050,
+          "history": [
+            1977,
+            2020,
+            1982,
+            2012,
+            2019,
+            2016,
+            1995,
+            1999,
+            2019,
+            2032,
+            2018,
+            2014,
+            2008,
+            2010,
+            2027,
+            2014,
+            2021,
+            2027,
+            2028,
+            2001,
+            2012,
+            2036,
+            2031,
+            2045,
+            2009,
+            2019,
+            2033,
+            2046,
+            2021,
+            2050
+          ]
+        }
+      },
+      "pickup": true,
+      "note": "Farm-gate: the trader collects from the village, so no transport cost."
+    },
+    {
+      "id": "duliajan",
+      "name": "Duliajan Daily Bazaar",
+      "distanceKm": 3,
+      "crops": {
+        "tomato": {
+          "today": 1450,
+          "history": [
+            1380,
+            1400,
+            1420,
+            1450
+          ]
+        },
+        "mustard": {
+          "today": 5350,
+          "history": [
+            5300,
+            5325,
+            5340,
+            5350
+          ]
+        },
+        "potato": {
+          "today": 1220,
+          "history": [
+            1190,
+            1205,
+            1215,
+            1220
+          ]
+        }
+      }
+    },
+    {
+      "id": "naharkatia",
+      "name": "Naharkatia Weekly Haat",
+      "distanceKm": 12,
+      "crops": {
+        "tomato": {
+          "today": 1480,
+          "history": [
+            1400,
+            1435,
+            1460,
+            1480
+          ]
+        },
+        "mustard": {
+          "today": 5380,
+          "history": [
+            5330,
+            5350,
+            5365,
+            5380
+          ]
+        },
+        "potato": {
+          "today": 1240,
+          "history": [
+            1210,
+            1220,
+            1230,
+            1240
+          ]
+        }
+      }
+    },
+    {
+      "id": "digboi",
+      "name": "Digboi Main Bazaar",
+      "distanceKm": 15,
+      "crops": {
+        "tomato": {
+          "today": 1470,
+          "history": [
+            1420,
+            1440,
+            1455,
+            1470
+          ]
+        },
+        "mustard": {
+          "today": 5420,
+          "history": [
+            5360,
+            5390,
+            5405,
+            5420
+          ]
+        },
+        "potato": {
+          "today": 1235,
+          "history": [
+            1200,
+            1215,
+            1228,
+            1235
+          ]
+        }
+      }
+    },
+    {
+      "id": "namrup",
+      "name": "Namrup Bazaar",
+      "distanceKm": 25,
+      "crops": {
+        "tomato": {
+          "today": 1650,
+          "history": [
+            1520,
+            1580,
+            1610,
+            1650
+          ]
+        },
+        "mustard": {
+          "today": 5560,
+          "history": [
+            5450,
+            5500,
+            5530,
+            5560
+          ]
+        },
+        "potato": {
+          "today": 1295,
+          "history": [
+            1250,
+            1270,
+            1285,
+            1295
+          ]
+        }
+      }
+    },
+    {
+      "id": "jorhat",
+      "name": "Jorhat Mandi",
+      "distanceKm": 30,
+      "crops": {
+        "paddy": {
+          "today": 2310,
+          "history": [
+            2199,
+            2160,
+            2158,
+            2215,
+            2175,
+            2176,
+            2209,
+            2197,
+            2231,
+            2200,
+            2244,
+            2214,
+            2233,
+            2256,
+            2247,
+            2264,
+            2257,
+            2226,
+            2275,
+            2264,
+            2254,
+            2252,
+            2292,
+            2282,
+            2305,
+            2301,
+            2315,
+            2299,
+            2310,
+            2310
+          ]
+        }
+      }
+    },
+    {
+      "id": "tinsukia",
+      "name": "Tinsukia Mandi",
+      "distanceKm": 35,
+      "crops": {
+        "tomato": {
+          "today": 1600,
+          "history": [
+            1500,
+            1550,
+            1580,
+            1600
+          ]
+        },
+        "mustard": {
+          "today": 5520,
+          "history": [
+            5430,
+            5470,
+            5500,
+            5520
+          ]
+        },
+        "potato": {
+          "today": 1280,
+          "history": [
+            1240,
+            1260,
+            1272,
+            1280
+          ]
+        },
+        "paddy": {
+          "today": 2240,
+          "history": [
+            2161,
+            2166,
+            2178,
+            2151,
+            2173,
+            2188,
+            2191,
+            2155,
+            2181,
+            2181,
+            2177,
+            2203,
+            2182,
+            2180,
+            2208,
+            2194,
+            2178,
+            2181,
+            2193,
+            2171,
+            2203,
+            2211,
+            2197,
+            2221,
+            2227,
+            2210,
+            2218,
+            2191,
+            2189,
+            2240
+          ]
+        }
+      }
+    },
+    {
+      "id": "sivasagar",
+      "name": "Sivasagar Mandi",
+      "distanceKm": 40,
+      "crops": {
+        "paddy": {
+          "today": 2120,
+          "history": [
+            2080,
+            2087,
+            2103,
+            2070,
+            2072,
+            2063,
+            2068,
+            2063,
+            2071,
+            2090,
+            2114,
+            2100,
+            2084,
+            2086,
+            2101,
+            2083,
+            2071,
+            2110,
+            2099,
+            2075,
+            2073,
+            2075,
+            2119,
+            2076,
+            2103,
+            2121,
+            2074,
+            2092,
+            2097,
+            2120
+          ]
+        }
+      }
+    },
+    {
+      "id": "dibrugarh",
+      "name": "Dibrugarh Mandi",
+      "distanceKm": 45,
+      "crops": {
+        "tomato": {
+          "today": 1620,
+          "history": [
+            1500,
+            1560,
+            1590,
+            1620
+          ]
+        },
+        "mustard": {
+          "today": 5580,
+          "history": [
+            5470,
+            5520,
+            5550,
+            5580
+          ]
+        },
+        "potato": {
+          "today": 1310,
+          "history": [
+            1255,
+            1280,
+            1295,
+            1310
+          ]
+        },
+        "paddy": {
+          "today": 2180,
+          "history": [
+            2117,
+            2124,
+            2144,
+            2122,
+            2126,
+            2131,
+            2112,
+            2131,
+            2138,
+            2148,
+            2114,
+            2126,
+            2116,
+            2155,
+            2150,
+            2118,
+            2168,
+            2169,
+            2154,
+            2154,
+            2132,
+            2126,
+            2154,
+            2131,
+            2139,
+            2143,
+            2134,
+            2158,
+            2158,
+            2180
+          ]
+        }
+      }
+    }
+  ]
+}

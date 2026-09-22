@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KrishiMitra — Know Your Market. Choose Your Moment.</title>
+  <meta name="theme-color" content="#0F5132">
+  <meta name="description" content="Agricultural market intelligence and farm decision support: compare markets, monitor prices, review weather and crop risks.">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- AUTH VIEW (shown when logged out) -->
+<section id="view-auth" class="view"></section>
+
+<!-- APP -->
+<div id="app" style="display:none">
+  <header id="topbar">
+    <div class="brand">🌱 KrishiMitra</div>
+    <nav id="mainnav">
+      <button data-view="sell"      class="navbtn">Sell decision</button>
+      <button data-view="markets"   class="navbtn">Compare markets</button>
+      <button data-view="alerts"    class="navbtn">Alerts</button>
+      <button data-view="sales"     class="navbtn">My sales</button>
+      <button data-view="assistant" class="navbtn">Ask AI</button>
+      <span class="navsep"></span>
+      <button data-view="dashboard" class="navbtn">Dashboard</button>
+      <button data-view="profile"   class="navbtn">Farm Profile</button>
+      <button data-view="season"    class="navbtn">Season &amp; Crop</button>
+      <button data-view="guidance"  class="navbtn">Guidance</button>
+    </nav>
+    <button id="installBtn" class="btn orange small" style="display:none">📲 Install app</button>
+    <span id="userchip"></span>
+    <button id="logoutBtn" class="btn ghost small">Log out</button>
+  </header>
+
+  <div id="demobanner" class="banner" style="display:none">
+    DEMO MODE — offline, no login. Weather is live; market prices are prototype data (labelled DEMO).
+  </div>
+
+  <main>
+    <section id="view-sell"      class="view"></section>
+    <section id="view-alerts"    class="view"></section>
+    <section id="view-sales"     class="view"></section>
+    <section id="view-dashboard" class="view"></section>
+    <section id="view-profile"   class="view"></section>
+    <section id="view-season"    class="view"></section>
+    <section id="view-markets"   class="view"></section>
+    <section id="view-guidance"  class="view"></section>
+    <section id="view-assistant" class="view"></section>
+  </main>
+
+  <footer id="footnote">
+    KrishiMitra · Student innovation prototype · Weather: live (Open-Meteo) · Market prices: prototype dataset (DEMO)
+  </footer>
+</div>
+
+<div id="toast"></div>
+
+<script type="module" src="js/app.js"></script>
+
+<script>
+/* Installable app (PWA): registers the service worker when served over http(s),
+   so the installed app works offline. Skipped for file:// (the demo laptop). */
+if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>

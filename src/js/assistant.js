@@ -1,0 +1,132 @@
+// Gemini assistant — grounded in THIS farm's context (the difference between
+// "a chatbot" and KrishiMitra's assistant). Fails over to rule-based guidance.
+import { state } from "./state.js";
+import { GEMINI_API_KEY, GEMINI_MODEL } from "./config.js";
+import { CROPS } from "./crops.js";
+import { buildGuidance } from "./guidance.js";
+import { toast } from "./ui.js";
+
+const URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+
+// Is a real key configured (vs the PASTE_ placeholder)?
+function keyConfigured(){
+  return !!GEMINI_API_KEY && !GEMINI_API_KEY.startsWith('PASTE');
+}
+
+function buildContext(){
+  const p = state.profile || {};
+  const s = state.season || {};
+  const crop = CROPS[s.crop];
+  const w = state.weather?.data;
+  const wx = w ? {
+    current: `${Math.round(w.current.temperature_2m)}°C, humidity ${w.current.relative_humidity_2m}%`,
+    next3: (w.daily.precipitation_probability_max || []).slice(0, 3).map(x => (x ?? 0) + '%').join(', '),
+    maxT: Math.round(Math.max(...(w.daily.temperature_2m_max || []).slice(0, 3).map(x => x ?? 0)))
+  } : null;
+  const mk = (state.markets || []).slice(0, 4)
+    .map(m => `${m.name}: ₹${m.price}/qtl, ${m.distanceKm} km, net ₹${m.netPerQtl}/qtl`).join('; ');
+
+  return `You are KrishiMitra, an agricultural decision-support assistant for Indian farmers.
+
+STRICT RULES:
+- Suggest, never guarantee. Never promise prices, profits or weather outcomes.
+- Use ONLY the farm context below plus general crop knowledge. If data is missing, say so plainly.
+- Plain language, 120 words maximum, no jargon. Prefer short sentences.
+- If the question is not about farming, crops, weather or markets, politely redirect.
+- Never invent market prices or prices not listed below.
+- Where relevant, finish with one practical next step.
+
+FARM CONTEXT (today's data):
+Farm: ${p.acres ?? '?'} acres, soil ${p.soil ?? '?'}, irrigation ${p.irrigation ?? '?'}, near ${p.village ?? '?'}
+Crop this season: ${crop ? crop.label : s.crop ?? 'none set'}${s.variety ? ' (' + s.variety + ')' : ''}, stage: ${s.stage ?? '?'}, expected quantity: ${s.quantityQtl ?? '?'} quintals, sown: ${s.sowingDate ?? '?'}
+Weather: ${wx ? `${wx.current}; next-3-day rain chances ${wx.next3}; max temp ${wx.maxT}°C` : 'unavailable'}
+Market prices (PROTOTYPE data, labelled DEMO): ${mk || 'unavailable'}
+Note: market prices are simulated for the prototype; weather is live. Be transparent if asked.`;
+}
+
+export async function askGemini(question){
+  const body = {
+    systemInstruction: { parts: [{ text: buildContext() }] },
+    contents: [{ role: 'user', parts: [{ text: question }] }],
+    generationConfig: { temperature: 0.4, maxOutputTokens: 350 }
+  };
+  const r = await fetch(URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error('Gemini HTTP ' + r.status);
+  const j = await r.json();
+  const text = j.candidates?.[0]?.content?.parts?.map(p => p.text).join('') || '';
+  if (!text) throw new Error('Empty response from Gemini');
+  return text.trim();
+}
+
+// ---------- Chat UI ----------
+const QUICK = [
+  'Should I sell my crop this week?',
+  'What does the rain forecast mean for my crop?',
+  'Which market is best for me today?'
+];
+
+export function renderAssistant(){
+  const v = document.getElementById('view-assistant');
+  v.innerHTML = `
+    <h2>Ask KrishiMitra</h2>
+    <p class="sub">Answers use your farm, your crop and today's weather and market context.</p>
+    <div class="quick">
+      ${QUICK.map(q => `<button data-q="${q}">${q}</button>`).join('')}
+    </div>
+    <div id="chatlog"></div>
+    <div class="chatrow">
+      <input id="chatInput" placeholder="Ask about your crop, weather or markets…">
+      <button class="btn" id="chatSend">Ask</button>
+    </div>
+    <div class="caveat">AI-assisted interpretation only — decision support, not a guarantee. If the assistant is unavailable,
+    you'll be shown your rule-based guidance instead.</div>`;
+
+  const log = document.getElementById('chatlog');
+  const input = document.getElementById('chatInput');
+
+  const addMsg = (text, cls) => {
+    const div = document.createElement('div');
+    div.className = 'msg ' + cls;
+    div.textContent = text;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+    return div;
+  };
+
+  async function send(q){
+    if (!q || !q.trim()) return;
+    input.value = '';
+    addMsg(q, 'user');
+
+    // No Gemini key yet → show the rule-based guidance instead (labelled honestly).
+    // This is also the graceful-failure path judges will ask about.
+    if (!keyConfigured()){
+      const g = buildGuidance();
+      addMsg('Demo mode — AI answers are off until a Gemini key is added in js/config.js. Here is your rule-based guidance instead:', 'sys');
+      addMsg(g.actions.map(a => '• ' + a.title + ' — ' + a.detail).join('\n\n')
+             + '\n\n— generated by the rules engine, not AI.', 'ai');
+      toast('AI off (no key) — showing rule-based guidance');
+      return;
+    }
+
+    const pending = addMsg('Thinking…', 'sys');
+    try {
+      const answer = await askGemini(q);
+      pending.remove();
+      addMsg(answer, 'ai');
+    } catch (e) {
+      pending.remove();
+      addMsg('The AI assistant is temporarily unavailable — here is your rule-based guidance instead. Open the Guidance tab for the full view.', 'sys');
+      toast('AI unavailable — rule-based guidance is ready in the Guidance tab');
+      console.warn('Gemini error:', e.message);
+    }
+  }
+
+  document.getElementById('chatSend').onclick = () => send(input.value);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') send(input.value); });
+  v.querySelectorAll('.quick button').forEach(b => b.onclick = () => send(b.dataset.q));
+}

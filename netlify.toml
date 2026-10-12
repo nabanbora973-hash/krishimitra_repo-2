@@ -1,0 +1,33 @@
+# KrishiMitra — Netlify configuration
+#
+#   • publishes src/ as the static site (single source of truth for the app)
+#   • runs the server-side AGMARKNET proxy at /api/agmarknet
+#     (keeps the data.gov.in key out of the browser and avoids CORS entirely)
+
+[build]
+  publish = "src"
+  functions = "netlify/functions"
+
+# Hide the raw function path behind a clean endpoint
+[[redirects]]
+  from = "/api/agmarknet"
+  to = "/.netlify/functions/agmarknet"
+  status = 200
+  force = true
+
+# The app shell changes on every deploy — always revalidate
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Government prices are cached briefly at the edge; the app also caches client-side
+[[headers]]
+  for = "/api/agmarknet"
+  [headers.values]
+    Cache-Control = "public, max-age=900, s-maxage=1800, stale-while-revalidate=600"

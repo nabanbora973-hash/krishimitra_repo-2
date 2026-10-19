@@ -1,0 +1,37 @@
+{
+  "name": "krishimitra",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Farm decision support — mandi prices, weather and harvest timing in one clear call.",
+  "homepage": "https://animated-croissant-38c5fc.netlify.app",
+  "license": "MIT",
+  "scripts": {
+    "dev": "python3 tools/serve_local.py",
+    "build": "python3 tools/build_standalone.py",
+    "test": "node tests/proxy_test.cjs && node tests/pwa_test.cjs && node tests/smoke.cjs && node tests/standalone_check.cjs",
+    "test:proxy": "node tests/proxy_test.cjs",
+    "test:pwa": "node tests/pwa_test.cjs",
+    "test:smoke": "node tests/smoke.cjs",
+    "test:standalone": "node tests/standalone_check.cjs",
+    "test:nojs": "node tests/nojs_test.cjs",
+    "test:site": "python3 tests/site_check.py"
+  },
+  "devDependencies": {
+    "jsdom": "^24.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "agriculture",
+    "agmarknet",
+    "pwa",
+    "offline-first",
+    "decision-support",
+    "vanilla-js",
+    "service-worker"
+  ],
+  "dependencies": {
+    "esbuild": "^0.28.2"
+  }
+}

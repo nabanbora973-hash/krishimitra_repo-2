@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KrishiMitra — Know Your Market. Choose Your Moment.</title>
+  <meta name="theme-color" content="#0F5132">
+  <meta name="description" content="Agricultural market intelligence and farm decision support: compare markets, monitor prices, review weather and crop risks.">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <style>
+/* KrishiMitra design system — colors sampled from the official deck */
+:root{
+  --green:#0F5132; --green-mid:#1B7F4B; --green-light:#7CCB5A; --panel:#EAF5EC;
+  --orange:#F28C28; --cream:#FDEBD9; --cream-tx:#7A4A14;
+  --ink:#1F2A24; --muted:#5C6B62; --line:#DCEBE0;
+  --blue:#1552A8; --blue-bg:#DCEBFF;
+  --red:#B00020;
+  --radius:14px; --shadow:0 2px 10px rgba(15,81,50,.08);
+}
+*{box-sizing:border-box;margin:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;color:var(--ink);background:#FCFEFC}
+.view{display:none;max-width:1100px;margin:0 auto;padding:22px 20px 60px}
+.view.active{display:block}
+h1,h2,h3{color:var(--green)}
+h2{font-size:24px;margin-bottom:4px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:16px}
+
+/* topbar */
+#topbar{display:flex;align-items:center;gap:14px;background:#fff;border-bottom:1px solid var(--line);
+  padding:10px 22px;position:sticky;top:0;z-index:50;flex-wrap:wrap}
+.brand{font-weight:800;color:var(--green);font-size:18px}
+#mainnav{display:flex;gap:4px;flex-wrap:wrap}
+.navbtn{background:none;border:0;padding:8px 11px;border-radius:9px;cursor:pointer;font-size:14px;color:var(--ink);font-family:inherit}
+.navbtn:hover{background:var(--panel)}
+.navbtn.on{background:var(--green);color:#fff}
+#userchip{color:var(--muted);font-size:12.5px;margin-left:auto}
+#footnote{padding:14px 22px 30px;color:var(--muted);font-size:12px;text-align:center}
+
+/* cards & layout */
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+.card+.card{margin-top:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+
+/* controls */
+label{font-size:13px;font-weight:600;color:var(--muted)}
+input,select,textarea{width:100%;padding:10px 12px;margin:5px 0 14px;border:1px solid var(--line);
+  border-radius:10px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--green-light);border-color:var(--green-light)}
+.btn{background:var(--green);color:#fff;border:0;border-radius:10px;padding:10px 18px;font-size:14px;
+  cursor:pointer;font-family:inherit;font-weight:600}
+.btn:hover{background:var(--green-mid)}
+.btn.orange{background:var(--orange)}
+.btn.ghost{background:none;color:var(--green);border:1.5px solid var(--green)}
+.btn.small{padding:6px 12px;font-size:12.5px}
+.btn:disabled{opacity:.55;cursor:wait}
+
+/* chips & badges */
+.chip{display:inline-block;font-size:10.5px;font-weight:800;border-radius:999px;padding:3px 10px;
+  margin-left:6px;vertical-align:middle;letter-spacing:.3px}
+.chip.live{background:var(--blue-bg);color:var(--blue)}
+.chip.demo{background:var(--cream);color:#8A4A12}
+.banner{background:var(--cream);color:var(--cream-tx);font-style:italic;padding:10px 22px;font-size:13px}
+
+/* stats & numbers */
+.stat{color:var(--green);font-weight:800;font-size:26px}
+.stat.orange{color:var(--orange)}
+.statlabel{color:var(--muted);font-size:12px}
+.pos{color:var(--green);font-weight:700}
+.neg{color:var(--red);font-weight:700}
+
+/* tables */
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tablewrap table{min-width:680px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{background:var(--green);color:#fff;text-align:left;padding:9px 10px;font-size:12.5px}
+td{padding:9px 10px;border-bottom:1px solid var(--line)}
+tr.best td{background:var(--panel)}
+tr:nth-child(even) td{background:#F7FBF8}
+tr.best:nth-child(even) td{background:var(--panel)}
+
+/* bars (price chart, no library) */
+.bars{display:flex;align-items:flex-end;gap:10px;height:130px;padding:8px 4px 0}
+.bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}
+.bar .fill{width:100%;background:var(--orange);border-radius:6px 6px 0 0;min-height:4px}
+.bar .fill.bestf{background:var(--green-mid)}
+.bar .lbl{font-size:10.5px;color:var(--muted);text-align:center;line-height:1.15}
+.bar .val{font-size:11px;font-weight:700;color:var(--ink)}
+
+/* risk cards */
+.risk{border-left:5px solid var(--muted);border-radius:10px;background:#fff;border:1px solid var(--line);
+  padding:12px 14px;margin-bottom:10px}
+.risk.high{border-left-color:var(--red)}
+.risk.medium{border-left-color:var(--orange)}
+.risk.opportunity{border-left-color:var(--green-mid)}
+.risk .t{font-weight:700;font-size:14px}
+.risk .why{color:var(--muted);font-size:12.5px;margin-top:3px}
+
+/* weather strip */
+.days{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
+.day{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center;min-width:86px}
+.day .ic{font-size:22px}
+.day .dt{font-size:11.5px;color:var(--muted);margin-bottom:3px}
+.day .tp{font-size:13px;font-weight:700}
+.day .rn{font-size:11px;color:var(--blue)}
+
+/* guidance */
+.gact{background:var(--panel);border-radius:12px;padding:13px 15px;margin-bottom:10px}
+.gact .ttl{font-weight:800;color:var(--green);font-size:14.5px}
+.gact .ds{font-size:13px;color:var(--ink);margin-top:3px}
+.conf{display:inline-block;font-size:11.5px;font-weight:800;border-radius:999px;padding:4px 12px}
+.conf.high{background:var(--panel);color:var(--green)}
+.conf.medium{background:var(--cream);color:var(--cream-tx)}
+.conf.low{background:#FBEAEA;color:var(--red)}
+
+/* chat */
+#chatlog{height:320px;overflow-y:auto;border:1px solid var(--line);border-radius:12px;padding:14px;background:#fff;margin-bottom:12px}
+.msg{max-width:78%;padding:10px 13px;border-radius:13px;margin-bottom:10px;font-size:14px;line-height:1.45;white-space:pre-wrap}
+.msg.user{background:var(--green);color:#fff;margin-left:auto;border-bottom-right-radius:4px}
+.msg.ai{background:var(--panel);color:var(--ink);border-bottom-left-radius:4px}
+.msg.sys{background:var(--cream);color:var(--cream-tx);font-style:italic;max-width:100%}
+.quick{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.quick button{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 13px;
+  font-size:12.5px;cursor:pointer;color:var(--green);font-family:inherit;font-weight:600}
+.quick button:hover{background:#dff0e3}
+.chatrow{display:flex;gap:10px}
+.chatrow input{margin:0}
+
+/* states */
+.loading{color:var(--muted);font-style:italic;padding:14px 0}
+.errorbox{background:#FBEAEA;color:var(--red);border-radius:10px;padding:12px 14px;font-size:13.5px;margin:10px 0}
+.empty{color:var(--muted);text-align:center;padding:30px 10px;font-size:14px}
+.caveat{background:var(--cream);color:var(--cream-tx);font-style:italic;font-size:12px;
+  border-radius:10px;padding:10px 14px;margin-top:14px}
+.sourcenote{color:var(--muted);font-size:11px;margin-top:10px}
+
+/* toast */
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--green);
+  color:#fff;padding:11px 20px;border-radius:12px;font-size:13.5px;opacity:0;transition:.25s;z-index:100;max-width:90%}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* auth screen */
+#view-auth.active{display:flex;align-items:center;justify-content:center;min-height:88vh}
+.authcard{width:100%;max-width:430px;text-align:center}
+.authcard .logo{font-size:44px}
+.authcard h1{font-size:30px;margin:6px 0 2px}
+.authcard .tag{color:var(--orange);font-weight:700;font-style:italic;margin-bottom:20px}
+.herr{color:var(--red);font-size:13px;min-height:18px;margin-top:8px}
+.demo-link{display:inline-block;margin-top:16px;color:var(--muted);font-size:12.5px}
+
+/* ---------- demo video: dashboard card + modal player ---------- */
+.dim{color:var(--muted)}
+.vcard{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--line);
+  border-radius:var(--radius);padding:12px 16px;box-shadow:var(--shadow);margin:14px 0 4px;
+  cursor:pointer;transition:.15s}
+.vcard:hover{border-color:var(--green-light);transform:translateY(-1px);
+  box-shadow:0 6px 18px rgba(15,81,50,.12)}
+.vthumb{width:124px;height:70px;object-fit:cover;border-radius:9px;border:1px solid var(--line);
+  background:var(--panel);flex:0 0 auto}
+.vmeta{display:flex;flex-direction:column;gap:3px;font-size:14px}
+.vmeta b{color:var(--green)}
+.vmeta .dim{font-size:12.5px;line-height:1.35}
+.vplay{flex:0 0 auto;margin-left:auto}
+
+.vmodal{position:fixed;inset:0;background:rgba(15,32,22,.78);display:none;
+  align-items:center;justify-content:center;padding:18px;z-index:200}
+.vmodal.open{display:flex}
+.vmodal-box{position:relative;width:100%;max-width:940px;background:#fff;border-radius:16px;
+  padding:14px;box-shadow:0 24px 60px rgba(0,0,0,.4)}
+.vmodal-box video{width:100%;max-height:72vh;border-radius:10px;background:#000;display:block}
+.vmodal-close{position:absolute;top:-13px;right:-13px;width:34px;height:34px;border-radius:50%;
+  border:0;background:var(--green);color:#fff;font-size:15px;line-height:1;cursor:pointer;
+  box-shadow:0 3px 10px rgba(0,0,0,.3);font-family:inherit}
+.vmodal-close:hover{background:var(--green-mid)}
+.vmodal-note{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline;margin-top:10px;
+  font-size:12.5px;color:var(--ink)}
+.vmodal-note .vsep{color:var(--line)}
+.vmodal-note .dim{margin-left:auto;font-style:italic}
+.vmodal-note a{color:var(--green);font-weight:600}
+.vmodal-missing{background:var(--cream);color:var(--cream-tx);border-radius:10px;padding:14px 16px;
+  font-size:13.5px;line-height:1.5}
+body.noscroll{overflow:hidden}
+@media (max-width:640px){
+  .vcard{flex-wrap:wrap}
+  .vthumb{width:100%;height:150px}
+  .vplay{margin-left:0}
+  .vmodal-note .dim{margin-left:0}
+  .vmodal{padding:10px}
+}
+
+/* ================= SELL DECISION — verdict screen (video layout) ================= */
+.navsep{width:1px;height:22px;background:var(--line);margin:0 4px;align-self:center}
+.grid2{display:grid;grid-template-columns:1.35fr 1fr;gap:14px}
+@media (max-width:900px){.grid2{grid-template-columns:1fr}}
+
+.sellform .frow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end}
+.sellform label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted);font-weight:600}
+.sellform input,.sellform select{padding:9px 10px;border:1px solid var(--line);border-radius:9px;font-size:14px;font-family:inherit}
+.sellform .btn{padding:10px 16px}
+
+.verdict{border-left:6px solid var(--green);background:linear-gradient(180deg,#FFFFFF 0%,#F7FCF8 100%)}
+.verdict.wait{border-left-color:var(--orange)}
+.verdict.store{border-left-color:var(--blue)}
+.vrow{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.veyebrow{font-size:11px;letter-spacing:.12em;font-weight:800;color:var(--muted)}
+.vcall{font-size:44px;font-weight:900;letter-spacing:.5px;color:var(--green);line-height:1.05;margin:2px 0 4px}
+.verdict.wait .vcall{color:var(--orange)}
+.verdict.store .vcall{color:var(--blue)}
+.vbest{font-size:15px;color:var(--ink)}
+.vbest b{color:var(--green)}
+.vreasons{list-style:none;margin:14px 0 8px;padding:0;display:flex;flex-direction:column;gap:8px}
+.vreasons li{position:relative;padding-left:20px;font-size:14px;line-height:1.5;color:var(--ink)}
+.vreasons li::before{content:"";position:absolute;left:0;top:7px;width:8px;height:8px;border-radius:50%;background:var(--green-mid)}
+.verdict.wait .vreasons li::before{background:var(--orange)}
+.verdict.store .vreasons li::before{background:var(--blue)}
+
+.ring{text-align:center;flex:0 0 auto}
+.ringsvg{width:84px;height:84px;display:block}
+.ringlabel{font-size:9.5px;letter-spacing:.1em;font-weight:800;color:var(--muted);margin-top:2px}
+
+.cardhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.pills{display:flex;gap:6px}
+.pill{border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:999px;
+  padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+.pill.on{background:var(--green);border-color:var(--green);color:#fff}
+
+.chartwrap{margin-top:8px}
+.chart{width:100%;height:auto;display:block}
+.chartfoot{display:flex;justify-content:flex-end;font-size:11.5px;color:var(--muted);margin-top:2px}
+
+.earn{font-size:38px;font-weight:900;color:var(--orange);line-height:1.1;margin:8px 0 2px}
+.minitable{width:100%;border-collapse:collapse;margin-top:12px;font-size:13.5px}
+.minitable td{padding:7px 0;border-bottom:1px solid var(--line)}
+.minitable td:last-child{text-align:right;font-weight:700}
+.minitable tr.tot td{border-bottom:0;font-weight:800;color:var(--green)}
+
+.signals{background:var(--panel);border-radius:var(--radius);padding:12px 16px;margin-top:14px;
+  font-size:13px;color:var(--green);line-height:1.6}
+.signals b{color:var(--green)}
+.cta{background:var(--cream);border:1px solid #F3D9BC}
+.cta b{color:var(--cream-tx)}
+
+/* ================= ALERTS ================= */
+.alertlist{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.alert{display:flex;gap:12px;align-items:flex-start;background:#fff;border:1px solid var(--line);
+  border-left:5px solid var(--green-mid);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+.alert.high{border-left-color:var(--red)}
+.alert.medium{border-left-color:var(--orange)}
+.alert.good{border-left-color:var(--green-mid)}
+.alert.info{border-left-color:var(--blue)}
+.alert b{color:var(--green)}
+.chip.red{background:#FBEAEA;color:var(--red)}
+
+/* ================= MY SALES ================= */
+.salelist{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+.salerow{display:flex;align-items:baseline;gap:10px;font-size:14px;border-bottom:1px dashed var(--line);padding-bottom:8px}
+.salerow:last-child{border-bottom:0}
+.saledate{color:var(--muted);font-size:12.5px;min-width:58px}
+.salemkt{font-weight:700;color:var(--ink)}
+.saleprice{margin-left:auto;font-weight:800;color:var(--green)}
+.btnlink{background:none;border:0;color:var(--muted);font-size:12px;text-decoration:underline;cursor:pointer;font-family:inherit}
+@media (max-width:640px){
+  .vcall{font-size:34px}
+  .earn{font-size:30px}
+  .sellform .frow{grid-template-columns:1fr 1fr}
+}
+
+/* ================= MERGED BUILD: greeting hero, weather strip, options, benchmark, roadmap ================= */
+.greet{margin:2px 0 14px}
+.gdate{font-size:11px;letter-spacing:.14em;font-weight:800;color:var(--muted);text-transform:uppercase}
+.ghello{font-size:30px;font-weight:900;color:var(--green);margin:4px 0 2px;line-height:1.15}
+.gsub{color:var(--muted);font-size:14.5px}
+.gsub b{color:var(--ink)}
+
+.wstrip{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;
+  margin-top:14px;box-shadow:var(--shadow)}
+.whead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px}
+.whead b{color:var(--green)}
+.whead .dim{font-size:12px}
+.wrow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px}
+.wcell{background:var(--panel);border-radius:10px;padding:9px 6px;text-align:center}
+.wcell.wet{background:var(--blue-bg)}
+.wcell .wd{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.wcell .wt{font-size:19px;font-weight:800;color:var(--green);margin:2px 0}
+.wcell .wr{font-size:11.5px;color:var(--muted)}
+.wadv{margin-top:10px;font-size:13.5px;background:var(--cream);color:var(--cream-tx);border-radius:10px;padding:9px 12px}
+
+.splitbox{background:var(--panel);border-radius:10px;padding:10px 12px;margin-top:12px;font-size:13.5px;color:var(--green)}
+.opttable{margin-top:12px;border-top:1px dashed var(--line)}
+.opttable td:first-child{color:var(--ink)}
+
+.bench{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;background:#fff;border:1px solid var(--line);
+  border-radius:var(--radius);padding:16px;margin-top:14px;box-shadow:var(--shadow)}
+.bench .bnum{font-size:24px;font-weight:900;color:var(--green);line-height:1.2}
+.bench .bmid{border-left:1px dashed var(--line);border-right:1px dashed var(--line);padding:0 14px}
+.bench .bnum.pos{color:var(--green-mid)}
+.bench .bnum.neg{color:var(--red)}
+.bench .dim{font-weight:600;font-size:14px}
+
+.roadmap{margin-top:12px;display:flex;flex-direction:column;gap:10px}
+.rmitem{display:flex;gap:10px;align-items:flex-start}
+.rmitem b{color:var(--green)}
+.rmitem .dim{font-size:12.5px;line-height:1.4}
+@media (max-width:900px){ .bench{grid-template-columns:1fr} .bench .bmid{border:0;padding:0} }
+@media (max-width:640px){ .wrow{grid-template-columns:repeat(3,1fr)} .ghello{font-size:24px} }
+
+</style>
+</head>
+<body>
+
+<!-- AUTH VIEW (shown when logged out) -->
+<section id="view-auth" class="view"></section>
+
+<!-- APP -->
+<div id="app" style="display:none">
+  <header id="topbar">
+    <div class="brand">🌱 KrishiMitra</div>
+    <nav id="mainnav">
+      <button data-view="sell"      class="navbtn">Sell decision</button>
+      <button data-view="markets"   class="navbtn">Compare markets</button>
+      <button data-view="alerts"    class="navbtn">Alerts</button>
+      <button data-view="sales"     class="navbtn">My sales</button>
+      <button data-view="assistant" class="navbtn">Ask AI</button>
+      <span class="navsep"></span>
+      <button data-view="dashboard" class="navbtn">Dashboard</button>
+      <button data-view="profile"   class="navbtn">Farm Profile</button>
+      <button data-view="season"    class="navbtn">Season &amp; Crop</button>
+      <button data-view="guidance"  class="navbtn">Guidance</button>
+    </nav>
+    <button id="installBtn" class="btn orange small" style="display:none">📲 Install app</button>
+    <span id="userchip"></span>
+    <button id="logoutBtn" class="btn ghost small">Log out</button>
+  </header>
+
+  <div id="demobanner" class="banner" style="display:none">
+    DEMO MODE — offline, no login. Weather is live; market prices are prototype data (labelled DEMO).
+  </div>
+
+  <main>
+    <section id="view-sell"      class="view"></section>
+    <section id="view-alerts"    class="view"></section>
+    <section id="view-sales"     class="view"></section>
+    <section id="view-dashboard" class="view"></section>
+    <section id="view-profile"   class="view"></section>
+    <section id="view-season"    class="view"></section>
+    <section id="view-markets"   class="view"></section>
+    <section id="view-guidance"  class="view"></section>
+    <section id="view-assistant" class="view"></section>
+  </main>
+
+  <footer id="footnote">
+    KrishiMitra · Student innovation prototype · Weather: live (Open-Meteo) · Market prices: prototype dataset (DEMO)
+  </footer>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const __KM_MARKET_DATA = {
+  "asOf": "2026-10-13",
+  "note": "PROTOTYPE dataset for demonstration — structured like Agmarknet price rows. Not live market data. Distances are illustrative prototype values around the demo farm (near Duliajan, Assam). Paddy series mirrors the walkthrough video: Village trader ₹2,050 · Sivasagar ₹2,120 · Dibrugarh ₹2,180 · Tinsukia ₹2,240 · Jorhat ₹2,310 (best), each with 30 days of illustrative daily history so the trend chart and 90/30/7 toggles behave like the video. History is illustrative DEMO data; LIVE price history builds day-by-day from the government feed.",
+  "markets": [
+    {
+      "id": "villagetrader",
+      "name": "Village trader",
+      "distanceKm": 3,
+      "crops": {
+        "paddy": {
+          "today": 2050,
+          "history": [
+            1977,
+            2020,
+            1982,
+            2012,
+            2019,
+            2016,
+            1995,
+            1999,
+            2019,
+            2032,
+            2018,
+            2014,
+            2008,
+            2010,
+            2027,
+            2014,
+            2021,
+            2027,
+            2028,
+            2001,
+            2012,
+            2036,
+            2031,
+            2045,
+            2009,
+            2019,
+            2033,
+            2046,
+            2021,
+            2050
+          ]
+        }
+      },
+      "pickup": true,
+      "note": "Farm-gate: the trader collects from the village, so no transport cost."
+    },
+    {
+      "id": "duliajan",
+      "name": "Duliajan Daily Bazaar",
+      "distanceKm": 3,
+      "crops": {
+        "tomato": {
+          "today": 1450,
+          "history": [
+            1380,
+            1400,
+            1420,
+            1450
+          ]
+        },
+        "mustard": {
+          "today": 5350,
+          "history": [
+            5300,
+            5325,
+            5340,
+            5350
+          ]
+        },
+        "potato": {
+          "today": 1220,
+          "history": [
+            1190,
+            1205,
+            1215,
+            1220
+          ]
+        }
+      }
+    },
+    {
+      "id": "naharkatia",
+      "name": "Naharkatia Weekly Haat",
+      "distanceKm": 12,
+      "crops": {
+        "tomato": {
+          "today": 1480,
+          "history": [
+            1400,
+            1435,
+            1460,
+            1480
+          ]
+        },
+        "mustard": {
+          "today": 5380,
+          "history": [
+            5330,
+            5350,
+            5365,
+            5380
+          ]
+        },
+        "potato": {
+          "today": 1240,
+          "history": [
+            1210,
+            1220,
+            1230,
+            1240
+          ]
+        }
+      }
+    },
+    {
+      "id": "digboi",
+      "name": "Digboi Main Bazaar",
+      "distanceKm": 15,
+      "crops": {
+        "tomato": {
+          "today": 1470,
+          "history": [
+            1420,
+            1440,
+            1455,
+            1470
+          ]
+        },
+        "mustard": {
+          "today": 5420,
+          "history": [
+            5360,
+            5390,
+            5405,
+            5420
+          ]
+        },
+        "potato": {
+          "today": 1235,
+          "history": [
+            1200,
+            1215,
+            1228,
+            1235
+          ]
+        }
+      }
+    },
+    {
+      "id": "namrup",
+      "name": "Namrup Bazaar",
+      "distanceKm": 25,
+      "crops": {
+        "tomato": {
+          "today": 1650,
+          "history": [
+            1520,
+            1580,
+            1610,
+            1650
+          ]
+        },
+        "mustard": {
+          "today": 5560,
+          "history": [
+            5450,
+            5500,
+            5530,
+            5560
+          ]
+        },
+        "potato": {
+          "today": 1295,
+          "history": [
+            1250,
+            1270,
+            1285,
+            1295
+          ]
+        }
+      }
+    },
+    {
+      "id": "jorhat",
+      "name": "Jorhat Mandi",
+      "distanceKm": 30,
+      "crops": {
+        "paddy": {
+          "today": 2310,
+          "history": [
+            2199,
+            2160,
+            2158,
+            2215,
+            2175,
+            2176,
+            2209,
+            2197,
+            2231,
+            2200,
+            2244,
+            2214,
+            2233,
+            2256,
+            2247,
+            2264,
+            2257,
+            2226,
+            2275,
+            2264,
+            2254,
+            2252,
+            2292,
+            2282,
+            2305,
+            2301,
+            2315,
+            2299,
+            2310,
+            2310
+          ]
+        }
+      }
+    },
+    {
+      "id": "tinsukia",
+      "name": "Tinsukia Mandi",
+      "distanceKm": 35,
+      "crops": {
+        "tomato": {
+          "today": 1600,
+          "history": [
+            1500,
+            1550,
+            1580,
+            1600
+          ]
+        },
+        "mustard": {
+          "today": 5520,
+          "history": [
+            5430,
+            5470,
+            5500,
+            5520
+          ]
+        },
+        "potato": {
+          "today": 1280,
+          "history": [
+            1240,
+            1260,
+            1272,
+            1280
+          ]
+        },
+        "paddy": {
+          "today": 2240,
+          "history": [
+            2161,
+            2166,
+            2178,
+            2151,
+            2173,
+            2188,
+            2191,
+            2155,
+            2181,
+            2181,
+            2177,
+            2203,
+            2182,
+            2180,
+            2208,
+            2194,
+            2178,
+            2181,
+            2193,
+            2171,
+            2203,
+            2211,
+            2197,
+            2221,
+            2227,
+            2210,
+            2218,
+            2191,
+            2189,
+            2240
+          ]
+        }
+      }
+    },
+    {
+      "id": "sivasagar",
+      "name": "Sivasagar Mandi",
+      "distanceKm": 40,
+      "crops": {
+        "paddy": {
+          "today": 2120,
+          "history": [
+            2080,
+            2087,
+            2103,
+            2070,
+            2072,
+            2063,
+            2068,
+            2063,
+            2071,
+            2090,
+            2114,
+            2100,
+            2084,
+            2086,
+            2101,
+            2083,
+            2071,
+            2110,
+            2099,
+            2075,
+            2073,
+            2075,
+            2119,
+            2076,
+            2103,
+            2121,
+            2074,
+            2092,
+            2097,
+            2120
+          ]
+        }
+      }
+    },
+    {
+      "id": "dibrugarh",
+      "name": "Dibrugarh Mandi",
+      "distanceKm": 45,
+      "crops": {
+        "tomato": {
+          "today": 1620,
+          "history": [
+            1500,
+            1560,
+            1590,
+            1620
+          ]
+        },
+        "mustard": {
+          "today": 5580,
+          "history": [
+            5470,
+            5520,
+            5550,
+            5580
+          ]
+        },
+        "potato": {
+          "today": 1310,
+          "history": [
+            1255,
+            1280,
+            1295,
+            1310
+          ]
+        },
+        "paddy": {
+          "today": 2180,
+          "history": [
+            2117,
+            2124,
+            2144,
+            2122,
+            2126,
+            2131,
+            2112,
+            2131,
+            2138,
+            2148,
+            2114,
+            2126,
+            2116,
+            2155,
+            2150,
+            2118,
+            2168,
+            2169,
+            2154,
+            2154,
+            2132,
+            2126,
+            2154,
+            2131,
+            2139,
+            2143,
+            2134,
+            2158,
+            2158,
+            2180
+          ]
+        }
+      }
+    }
+  ]
+}
+;
+const __KM_CROPS = {
+  "paddy": {
+    "label": "Paddy (Rice)", "season": "Sali / Boro / Ahu", "durationDays": 120,
+    "stages": {"vegetative": [0, 50], "flowering": [50, 75], "grain-filling": [75, 100], "maturity": [100, 120], "harvest": [120, 140]},
+    "rainSensitiveStages": ["flowering", "harvest"],
+    "storageLifeDays": 150, "perishable": false
+  },
+  "tomato": {
+    "label": "Tomato", "season": "Rabi / Kharif", "durationDays": 110,
+    "stages": {"vegetative": [0, 35], "flowering": [35, 60], "fruiting": [60, 85], "harvest": [85, 110]},
+    "rainSensitiveStages": ["fruiting", "harvest"],
+    "storageLifeDays": 6, "perishable": true
+  },
+  "mustard": {
+    "label": "Mustard", "season": "Rabi", "durationDays": 105,
+    "stages": {"vegetative": [0, 40], "flowering": [40, 70], "pod-filling": [70, 95], "harvest": [95, 105]},
+    "rainSensitiveStages": ["harvest"],
+    "storageLifeDays": 180, "perishable": false
+  },
+  "potato": {
+    "label": "Potato", "season": "Rabi", "durationDays": 90,
+    "stages": {"vegetative": [0, 40], "tuberisation": [40, 70], "maturity": [70, 90]},
+    "rainSensitiveStages": ["harvest"],
+    "storageLifeDays": 60, "perishable": true
+  },
+  "brinjal": {
+    "label": "Brinjal", "season": "Year-round", "durationDays": 130,
+    "stages": {"vegetative": [0, 45], "flowering": [45, 70], "fruiting": [70, 130]},
+    "rainSensitiveStages": ["flowering"],
+    "storageLifeDays": 5, "perishable": true
+  },
+  "cabbage": {
+    "label": "Cabbage", "season": "Rabi", "durationDays": 95,
+    "stages": {"vegetative": [0, 45], "head-formation": [45, 80], "harvest": [80, 95]},
+    "rainSensitiveStages": ["harvest"],
+    "storageLifeDays": 20, "perishable": true
+  }
+}
+;
+(()=>{var Ht=Object.defineProperty;var he=(t,e,a)=>()=>{if(a)throw a[0];try{return t&&(e=t(t=0)),e}catch(s){throw a=[s],s}};var Wt=(t,e)=>{for(var a in e)Ht(t,a,{get:e[a],enumerable:!0})};var i,b=he(()=>{i={demo:!1,user:null,profile:null,season:null,weather:null,markets:[],risks:[],guidance:null}});var Qe,Ve,be,Ye,W,ee,we,Ue,Je,ze,$e=he(()=>{Qe=()=>Promise.reject(new Error("offline build \u2014 accounts disabled")),Ve=()=>Promise.reject(new Error("offline build \u2014 accounts disabled")),be=()=>Promise.resolve(),Ye=(t,e)=>(typeof e=="function"&&e(null),()=>{}),W=()=>null,ee=()=>Promise.resolve({exists:()=>!1,data:()=>({})}),we=()=>Promise.resolve(),Ue=()=>Promise.resolve({id:"offline"}),Je=()=>null,ze=()=>Date.now()});var te={};Wt(te,{loadGuidanceLog:()=>Vt,loadProfile:()=>Gt,loadSeason:()=>Qt,logGuidance:()=>Se,saveProfile:()=>ke,saveSeason:()=>xe});function U(t,e){localStorage.setItem(tt(t),JSON.stringify({...e,_savedAt:Date.now()}))}function P(t){let e=localStorage.getItem(tt(t));return e?JSON.parse(e):null}async function ke(t){if(i.demo)return U("profile",t),{local:!0};try{return await we(W(null,"users",i.user.uid),{profile:t},{merge:!0}),{local:!1}}catch(e){return console.warn("Firestore write failed, saving locally:",e.message),U("profile",t),{local:!0,error:e.message}}}async function Gt(){if(i.demo)return P("profile");try{let t=await ee(W(null,"users",i.user.uid));return t.exists()&&t.data().profile||null}catch(t){return console.warn("Firestore read failed:",t.message),P("profile")}}async function xe(t){if(i.demo)return U("season",t),{local:!0};try{return await we(W(null,"users",i.user.uid),{currentSeason:t},{merge:!0}),{local:!1}}catch(e){return U("season",t),{local:!0,error:e.message}}}async function Qt(){if(i.demo)return P("season");try{let t=await ee(W(null,"users",i.user.uid));return t.exists()&&t.data().currentSeason||null}catch{return P("season")}}async function Se(t){let e={...t,createdAt:Date.now()},a=P("guidanceLog")||[];if(a.unshift(e),U("guidanceLog",a.slice(0,50)),!i.demo)try{await Ue(Je(null,"users",i.user.uid,"guidanceLog"),{...t,createdAt:ze()})}catch(s){console.warn("Audit log to Firestore failed (kept locally):",s.message)}}async function Vt(){if(i.demo)return P("guidanceLog")||[];try{let t=await ee(W(null,"users",i.user.uid));return P("guidanceLog")||[]}catch{return P("guidanceLog")||[]}}var tt,N=he(()=>{b();$e();tt=t=>`km_${i.user?.uid||"anon"}_${t}`});b();function D(t){document.querySelectorAll(".view").forEach(a=>a.classList.remove("active"));let e=document.getElementById("view-"+t);e&&e.classList.add("active"),document.querySelectorAll(".navbtn").forEach(a=>a.classList.toggle("on",a.dataset.view===t)),window.scrollTo({top:0})}function Re(){document.getElementById("app").style.display="none"}function ge(){document.getElementById("app").style.display="block"}function je(t){document.getElementById("demobanner").style.display=t?"block":"none"}function Fe(t){let e=document.getElementById("demobanner");e&&(e.innerHTML=t,e.style.display="block")}function ve(t){document.getElementById("userchip").textContent=t||""}var A=()=>'<span class="chip live">LIVE</span>',H=()=>'<span class="chip demo">DEMO</span>';function y(t){let e=document.getElementById("toast");e.textContent=t,e.classList.add("on"),clearTimeout(e._h),e._h=setTimeout(()=>e.classList.remove("on"),2600)}function He(t="Loading\u2026"){return`<p class="loading">${t}</p>`}function We(t){return`<div class="empty">${t}</div>`}var d=t=>"\u20B9"+Math.round(t).toLocaleString("en-IN");var ye=t=>(t>=0?"+":"")+t.toFixed(1)+"%";function Ke(t){let e=Math.round((Date.now()-t)/6e4);if(e<1)return"just now";if(e<60)return e+"m ago";let a=Math.floor(e/60);return a<24?a+"h ago":Math.floor(a/24)+"d ago"}var fe=t=>new Date(t).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"});function Ge(){return`
+    <div class="card" style="margin-top:14px">
+      <b style="color:var(--green)">What's next</b>
+      <div class="statlabel" style="margin-top:4px">Built to grow with the farmer</div>
+      <div class="roadmap">
+        ${[["LIVE market feeds","AGMARKNET / data.gov.in daily prices \u2014 connected, with weekly history build-up"],["Storage + transport","partner rates for cold storage and shared transport to the mandi"],["Voice + local languages","Assamese \xB7 Bengali \xB7 Hindi \u2014 ask by voice, hear the answer"],["IoT crop sensing","soil moisture and storage temperature feeding the same decision engine"]].map(([e,a])=>`<div class="rmitem"><span class="chip ${e.startsWith("LIVE")?"live":"demo"}">${e.startsWith("LIVE")?"LIVE":"NEXT"}</span><div><b>${e}</b><div class="dim">${a}</div></div></div>`).join("")}
+      </div>
+    </div>`}$e();b();function Ze(){let t=document.getElementById("view-auth");t.innerHTML=`
+    <div class="card authcard">
+      <div class="logo">\u{1F331}</div>
+      <h1>KrishiMitra</h1>
+      <div class="tag">Know Your Market. Choose Your Moment.</div>
+      <input id="email" type="email" placeholder="Email" autocomplete="email">
+      <input id="pass" type="password" placeholder="Password (min 6 characters)" autocomplete="current-password">
+      <button class="btn" id="btnLogin" style="width:100%">Log in</button>
+      <button class="btn orange" id="btnSignup" style="width:100%;margin-top:8px">Create account</button>
+      <div class="herr" id="autherr"></div>
+      <a class="demo-link" href="?demo=1">\u25B6 Try the offline demo instead (no login)</a>
+      <a class="demo-link" href="#" onclick="window.kmOpenVideo && window.kmOpenVideo(); return false;">\u25B6 Watch the 2-minute demo video</a>
+    </div>`;let e=s=>document.getElementById("autherr").textContent=s,a=s=>document.getElementById(s).value.trim();document.getElementById("btnLogin").onclick=async()=>{e("");try{await Ve(a("email"),a("pass"))}catch(s){e(Xe(s.code||s.message))}},document.getElementById("btnSignup").onclick=async()=>{if(e(""),a("pass").length<6)return e("Password must be at least 6 characters.");try{await Qe(a("email"),a("pass"))}catch(s){e(Xe(s.code||s.message))}},document.getElementById("pass").addEventListener("keydown",s=>{s.key==="Enter"&&document.getElementById("btnLogin").click()})}function Xe(t){return{"auth/invalid-email":"That email address looks invalid.","auth/user-not-found":"No account found \u2014 create one below.","auth/wrong-password":"Wrong password \u2014 try again.","auth/invalid-credential":"Email or password is incorrect.","auth/email-already-in-use":"That email already has an account \u2014 log in instead.","auth/too-many-requests":"Too many attempts. Wait a minute and retry.","auth/operation-not-allowed":"Email/password sign-in is not enabled in Firebase (see Step 0.3).","auth/network-request-failed":"Network problem \u2014 check your internet connection."}[t]||"Something went wrong: "+t}function et(t){Ye(null,async e=>{i.user=e,await t(e)})}b();N();function ae(){let t=document.getElementById("view-profile"),e=i.profile||{};t.innerHTML=`
+    <h2>Farm Profile ${A()}</h2>
+    <p class="sub">Set once, keep forever. Only your crop details change each season.</p>
+    <div class="card" style="max-width:560px">
+      <label>Village / Town</label>
+      <input id="village" placeholder="e.g. Duliajan" value="${e.village||""}">
+      <button class="btn small" id="findLoc" type="button">Find my location</button>
+      <p id="geoResult" class="statlabel" style="margin:8px 0 18px">${e.lat?`\u2713 Saved location: ${e.village} (${(+e.lat).toFixed(2)}, ${(+e.lng).toFixed(2)})`:"We look up your location to fetch local weather."}</p>
+      <label>Land size (acres)</label>
+      <input id="acres" type="number" step="0.1" min="0" value="${e.acres??""}">
+      <label>Soil type</label>
+      <select id="soil">
+        ${["Alluvial","Clay","Loamy","Sandy","Laterite"].map(s=>`<option ${e.soil===s?"selected":""}>${s}</option>`).join("")}
+      </select>
+      <label>Irrigation</label>
+      <select id="irrigation">
+        ${["Rain-fed","Canal","Borewell / Tube well","River / Pond lift"].map(s=>`<option ${e.irrigation===s?"selected":""}>${s}</option>`).join("")}
+      </select>
+      <button class="btn" id="saveProfileBtn" style="width:100%">Save profile</button>
+    </div>`;let a=e.lat?{latitude:e.lat,longitude:e.lng,name:e.village}:null;document.getElementById("findLoc").onclick=async()=>{let s=document.getElementById("village").value.trim(),o=document.getElementById("geoResult");if(!s)return o.textContent="Type a village or town name first.";o.textContent="Looking up\u2026";try{let n=`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(s)}&count=1&language=en&format=json`,r=await(await fetch(n)).json();if(!r.results||!r.results.length)throw new Error("Location not found \u2014 try a nearby town name.");let u=r.results[0];a={latitude:u.latitude,longitude:u.longitude,name:u.name},o.textContent=`\u2713 Found: ${u.name}${u.admin1?", "+u.admin1:""} (${u.latitude.toFixed(2)}, ${u.longitude.toFixed(2)})`}catch(n){o.textContent="\u2717 "+n.message}},document.getElementById("saveProfileBtn").onclick=async()=>{if(!a)return y('Click "Find my location" first');let s={village:a.name,lat:a.latitude,lng:a.longitude,acres:parseFloat(document.getElementById("acres").value||0),soil:document.getElementById("soil").value,irrigation:document.getElementById("irrigation").value,savedAt:Date.now()};i.profile=s;let o=await ke(s);y(o.local?"Profile saved locally \u2713":"Profile saved \u2713"),document.dispatchEvent(new CustomEvent("km:data-changed")),D("season")}}b();N();var f={};async function at(){return Object.keys(f).length||(f=await(await Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(__KM_CROPS) })).json()),f}function Yt(t,e){let a=Math.floor((Date.now()-new Date(e))/864e5),s=f[t].stages,o=Object.keys(s).at(-1);for(let[n,[l,r]]of Object.entries(s))if(a>=l&&a<=r){o=n;break}return{stage:o,days:Math.max(a,0)}}function se(){let t=document.getElementById("view-season"),e=Object.entries(f);t.innerHTML=`
+    <h2>Season &amp; Crop Setup</h2>
+    <p class="sub">This season's crop \u2014 update it every season in a few steps. Your farm profile stays permanent.</p>
+    <div class="card" style="max-width:560px">
+      <label>Crop</label>
+      <select id="cropSel">${e.map(([r,u])=>`<option value="${r}">${u.label}</option>`).join("")}</select>
+      <label>Variety</label>
+      <input id="variety" placeholder="e.g. Local / Hybrid (optional)">
+      <label>Sowing date</label>
+      <input id="sowDate" type="date">
+      <label>Expected harvest quantity (quintals)</label>
+      <input id="qty" type="number" min="1" step="1" value="20">
+      <div id="stagePreview" class="caveat" style="display:none"></div>
+      <label style="margin-top:12px;display:block">Stage <span style="font-weight:400">(auto-suggested \u2014 you can override)</span></label>
+      <select id="stageSel"></select>
+      <button class="btn" id="saveSeasonBtn" style="width:100%">Save this season</button>
+    </div>`;let a=document.getElementById("cropSel"),s=document.getElementById("sowDate"),o=document.getElementById("stageSel"),n=document.getElementById("stagePreview");i.season?(a.value=i.season.crop||"paddy",document.getElementById("variety").value=i.season.variety||"",s.value=i.season.sowingDate||"",document.getElementById("qty").value=i.season.quantityQtl||20):s.value=new Date(Date.now()-60*864e5).toISOString().slice(0,10);function l(){let r=f[a.value];if(!r)return;let u=Object.keys(r.stages);if(o.innerHTML=u.map(c=>`<option value="${c}">${c}</option>`).join(""),s.value){let{stage:c,days:m}=Yt(a.value,s.value);o.value=c;let[g,h]=r.stages[c];n.style.display="block",n.textContent=`Day ${m} since sowing \xB7 suggested stage: ${c} (typical window: day ${g}\u2013${h} for ${r.label}).`+(c===u.at(-1)&&m>h?" Past the typical harvest window \u2014 check your field.":"")}}a.onchange=l,s.onchange=l,l(),document.getElementById("saveSeasonBtn").onclick=async()=>{let r={crop:a.value,variety:document.getElementById("variety").value.trim(),sowingDate:s.value,stage:o.value,quantityQtl:parseFloat(document.getElementById("qty").value||20),savedAt:Date.now()};if(!r.sowingDate)return y("Please pick a sowing date");i.season=r;let u=await xe(r);y(u.local?"Season saved locally \u2713":"Season saved \u2713"),document.dispatchEvent(new CustomEvent("km:data-changed")),D("markets")}}function st(){if(!i.season)return We("No crop set for this season \u2014 go to <b>Season &amp; Crop</b>.");let t=f[i.season.crop];return`<p><b>${t?t.label:i.season.crop}</b>${i.season.variety?" \xB7 "+i.season.variety:""}
+    \xB7 stage: <b>${i.season.stage}</b></p>
+    <p class="statlabel">Sown ${i.season.sowingDate} \xB7 expected ${i.season.quantityQtl} quintals</p>`}b();var ot="km_weather_cache";async function Ut(t,e){let a=`https://api.open-meteo.com/v1/forecast?latitude=${t}&longitude=${e}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max&timezone=auto&forecast_days=7`,s=await fetch(a);if(!s.ok)throw new Error("Weather service unavailable ("+s.status+")");let o=await s.json(),n={fetchedAt:Date.now(),data:o};try{localStorage.setItem(ot,JSON.stringify(n))}catch{}return{...n,cached:!1}}function Jt(){try{let t=localStorage.getItem(ot);return t?{...JSON.parse(t),cached:!0}:null}catch{return null}}async function it(t,e){try{return await Ut(t,e)}catch(a){let s=Jt();if(s)return s;throw a}}var zt=[[0,"\u2600\uFE0F"],[1,"\u{1F324}\uFE0F"],[2,"\u26C5"],[3,"\u2601\uFE0F"],[45,"\u{1F32B}\uFE0F"],[48,"\u{1F32B}\uFE0F"],[51,"\u{1F326}\uFE0F"],[53,"\u{1F326}\uFE0F"],[55,"\u{1F326}\uFE0F"],[61,"\u{1F327}\uFE0F"],[63,"\u{1F327}\uFE0F"],[65,"\u{1F327}\uFE0F"],[71,"\u{1F328}\uFE0F"],[73,"\u{1F328}\uFE0F"],[75,"\u{1F328}\uFE0F"],[80,"\u{1F326}\uFE0F"],[81,"\u{1F327}\uFE0F"],[82,"\u{1F327}\uFE0F"],[95,"\u26C8\uFE0F"],[96,"\u26C8\uFE0F"],[99,"\u26C8\uFE0F"]];function nt(t){let e="\u{1F324}\uFE0F";for(let[a,s]of zt)t>=a&&(e=s);return e}function rt(){if(!i.weather)return i.profile?'<p class="empty">Weather unavailable right now \u2014 check your connection. The rest of the app keeps working.</p>':'<p class="empty">Set up your farm profile to see live weather.</p>';let t=i.weather,e=t.data,a=e.current,s=o=>new Date(o).toLocaleDateString("en-IN",{weekday:"short"});return`
+    <p style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+      <span class="stat">${Math.round(a.temperature_2m)}\xB0C</span>
+      <span>${nt(a.weather_code)} now</span>
+      <span class="statlabel">humidity ${a.relative_humidity_2m}% \xB7 rain now ${a.precipitation} mm</span>
+      ${A()}
+    </p>
+    <div class="days" style="margin-top:12px">
+      ${e.daily.time.map((o,n)=>`
+        <div class="day">
+          <div class="dt">${s(o+"T00:00:00")}</div>
+          <div class="ic">${nt(e.daily.weather_code[n])}</div>
+          <div class="tp">${Math.round(e.daily.temperature_2m_max[n])}\xB0 / ${Math.round(e.daily.temperature_2m_min[n])}\xB0</div>
+          <div class="rn">\u{1F4A7} ${e.daily.precipitation_probability_max[n]??0}%</div>
+        </div>`).join("")}
+    </div>
+    ${t.cached?`<p class="caveat">Showing last known conditions \u2014 fetched ${Ke(t.fetchedAt)} (${fe(t.fetchedAt)}). Live refresh failed; the app keeps working.</p>`:`<p class="sourcenote">Live from Open-Meteo \xB7 updated ${fe(t.fetchedAt)}${e.timezone?" \xB7 "+e.timezone:""}</p>`}`}b();b();var Xt="https://api.data.gov.in/resource",Zt="9ef84268-d588-465a-a308-a864a43d0070",ea="579b464db66ec23bdd000001cdd3946e44ce4aad7209ff7b23ac571b",Me="km_live_cache_v2",ne="km_live_history_v2",Le={paddy:"Paddy",tomato:"Tomato",mustard:"Mustard",potato:"Potato",brinjal:"Brinjal",cabbage:"Cabbage"},k={apiKey:"",enabled:!0,maxAgeHours:12,mandiDistances:{}};function lt(t){k=Object.assign({},k,t||{}),!k.apiKey||/PASTE/i.test(k.apiKey)?k.usingSampleKey=!0:k.usingSampleKey=!1}var ta=()=>k.usingSampleKey?ea:k.apiKey,G=t=>String(t||"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim(),Ee=t=>{let e=Number(String(t??"").replace(/[^0-9.]/g,""));return isFinite(e)?e:null},ct=()=>new Date(Date.now()+5.5*36e5).toISOString().slice(0,10);function aa(t,e){let a=k.mandiDistances||{},s=[G(t),G(e)];for(let o of s)if(o)for(let[n,l]of Object.entries(a)){let r=G(n);if(r===o||o.includes(r)||r.includes(o))return{km:Number(l),matchedOn:n}}return{km:null,matchedOn:null}}function sa(t){let e=String(t||"").match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(!e)return{display:String(t||"\u2014"),iso:null};let[,a,s,o]=e;return{display:`${a.padStart(2,"0")}/${s.padStart(2,"0")}/${o}`,iso:`${o}-${s.padStart(2,"0")}-${a.padStart(2,"0")}`}}var Ie=()=>window.__kmSafeLS||localStorage;function oe(t){try{return JSON.parse(Ie().getItem(t)||"null")}catch{return null}}function dt(t,e){try{Ie().setItem(t,JSON.stringify(e))}catch{}}function na(t,e){let a=oe(ne)||{};a[t]=a[t]||{};let s=ct();for(let o of e){let n=a[t][o.key]=a[t][o.key]||{};n[s]=o.modal;let l=Object.keys(n).sort();l.length>90&&l.slice(0,l.length-90).forEach(r=>delete n[r])}dt(ne,a)}function oa(t,e){let s=oe(ne)?.[t]?.[e];return s?Object.keys(s).sort().map(o=>s[o]):[]}function ia(t){let a=oe(ne)?.[t]||{},s=new Set;return Object.values(a).forEach(o=>Object.keys(o).forEach(n=>s.add(n))),s.size}function ra(t){let e=Le[t];if(!e)throw new Error(`No AGMARKNET commodity mapped for "${t}"`);let a=[],s=!1;try{s=typeof location<"u"&&location.protocol!=="file:"&&!!location.origin&&location.origin!=="null"}catch{}let o=String(k.proxyBase||"").replace(/\/+$/,"");if(s||o){let l=new URLSearchParams;l.set("crop",t),a.push({kind:"server",url:`${o}/api/agmarknet?${l.toString()}`}),a.push({kind:"server",url:`${o}/.netlify/functions/agmarknet?${l.toString()}`})}let n=new URLSearchParams;return n.set("api-key",ta()),n.set("format","json"),n.set("limit",k.usingSampleKey?"10":"500"),n.set("filters[state.keyword]","Assam"),n.set("filters[commodity]",e),a.push({kind:"direct",url:`${Xt}/${Zt}?${n.toString()}`}),a}async function pt(t,{timeoutMs:e=12e3}={}){let a=Le[t],s=ra(t),o=[];for(let{kind:n,url:l}of s){let r=new AbortController,u=setTimeout(()=>r.abort(),e);try{let c=await fetch(l,{signal:r.signal,headers:{Accept:"application/json"}});if(!c.ok){let h=await c.text().catch(()=>""),v="";try{v=JSON.parse(h)?.hint||JSON.parse(h)?.message||""}catch{}throw new Error(`answered HTTP ${c.status}${v?" \u2014 "+v:""}`)}let m=await c.json(),g=m?.records||[];if(!g.length)throw new Error(m?.message||m?.status||"0 rows");return{records:g,total:m.total??g.length,fetchedAt:Date.now(),via:n,server:m.server||null}}catch(c){let m=c.name==="AbortError"?`timed out after ${Math.round(e/1e3)}s`:c.message;o.push(`${n==="server"?"our server (/api/agmarknet)":"api.data.gov.in"} ${m}`)}finally{clearTimeout(u)}}throw new Error(`Government price feed unreachable \u2014 ${o.join(" \xB7 ")}`)}function ut(t,e){let a=new Map;for(let r of e){let u=String(r.market||"").trim(),c=String(r.district||"").trim(),m=Ee(r.modal_price);if(!u||!m)continue;let g=G(u)||G(c),h=a.get(g);(!h||m>h.modal)&&a.set(g,{key:g,market:u,district:c,modal:m,min:Ee(r.min_price),max:Ee(r.max_price),variety:String(r.variety||"").trim(),grade:String(r.grade||"").trim(),date:sa(r.arrival_date)})}let s=[...a.values()];na(t,s);let o=[],n=[];for(let r of s){let u=aa(r.district,r.market),c={id:G(r.market).replace(/[^a-z0-9]+/g,"-"),name:r.market,district:r.district,distanceKm:u.km,live:{source:"AGMARKNET \xB7 data.gov.in",arrivalDate:r.date.display,variety:r.variety,grade:r.grade,min:r.min,max:r.max,modal:r.modal},crops:{[t]:{today:r.modal,history:oa(t,r.key),min:r.min,max:r.max}}};u.km==null&&n.push(c),o.push(c)}let l=s.map(r=>r.date.display).filter(r=>r&&r!=="\u2014");return{asOf:ct(),note:"LIVE \u2014 AGMARKNET daily market prices, Ministry of Agriculture & Farmers Welfare, via the Government of India open-data platform (data.gov.in).",govDate:l.sort().pop()||null,markets:o,unknownDistance:n}}async function mt(t){let e=oe(Me)||{},a=e[t],s=(k.maxAgeHours||12)*36e5;if(a&&Date.now()-a.savedAt<s)return{dataset:a.dataset,source:"LIVE",ageMs:Date.now()-a.savedAt,fromCache:!0,via:a.via};try{let{records:o,via:n}=await pt(t),l=ut(t,o);return e[t]={dataset:l,savedAt:Date.now(),via:n},dt(Me,e),{dataset:l,source:"LIVE",ageMs:0,fromCache:!1,via:n}}catch(o){return a?{dataset:a.dataset,source:"LAST KNOWN",ageMs:Date.now()-a.savedAt,error:o.message,fromCache:!0}:{dataset:null,source:null,error:o.message}}}function la(){try{Ie().removeItem(Me)}catch{}}function C(){let t=i.priceSource;return t?t.source==="LIVE"?'<span class="chip live">LIVE</span> <b>AGMARKNET</b>, Govt of India'+(t.govDate?` \u2014 as reported <b>${t.govDate}</b>`:"")+(t.fromCache?" (kept from this device's last check)":t.via==="server"?" \xB7 fetched by our server, so the API key never reaches your browser":"")+(k.usingSampleKey?' \xB7 <span class="dim">shared sample key \u2014 add your own free key in js/config.js</span>':""):t.source==="LAST KNOWN"?'<span class="chip demo">LAST KNOWN</span> Last government figure seen on this device'+(t.govDate?` (<b>${t.govDate}</b>)`:"")+` \xB7 <span class="dim">${t.error?String(t.error).slice(0,120):"feed unreachable"}</span>`:`<span class="chip demo">DEMO</span> Prototype dataset (illustrative) \u2014 <span class="dim">${t.error?String(t.error).slice(0,140):"government feed not connected"}</span>`:""}function ht(){let t=i.priceSource||{},e=i.season?.crop?ia(i.season.crop):0;return`
+    <div class="card" style="margin-top:14px">
+      <b style="color:var(--green)">Where these numbers come from</b>
+      <div style="margin-top:10px" class="srclist">
+        <div><span class="chip live">LIVE</span> Weather \u2014 Open-Meteo (hourly, no key needed)</div>
+        <div>${C()||'<span class="chip demo">DEMO</span> Market prices \u2014 not loaded yet'}</div>
+        <div><span class="chip demo">RULES</span> Risk &amp; guidance \u2014 KrishiMitra's own explainable rules</div>
+        <div>${e>1?`<span class="chip live">HISTORY</span> Price history \u2014 <b>${e} days</b> collected on this device from the government feed`:`<span class="chip demo">HISTORY</span> Price history \u2014 building (day ${Math.max(e,1)}; trends need 2+ days)`}</div>
+      </div>
+      <button class="btn ghost small" style="margin-top:10px" id="testFeedBtn">Test the government price feed now</button>
+      <div id="testFeedOut" class="sourcenote"></div>
+      <div class="sourcenote">Market prices: AGMARKNET (Ministry of Agriculture &amp; Farmers Welfare) released on
+      data.gov.in, the Government of India open-data platform. Transport cost uses the distances you set in
+      <code>js/config.js</code>. Distances &amp; storage cost are your own inputs, not government figures.</div>
+    </div>`}async function gt(){let t=document.getElementById("testFeedBtn"),e=document.getElementById("testFeedOut");!t||!e||(t.onclick=async()=>{let a=i.season?.crop;t.disabled=!0,e.textContent="Contacting api.data.gov.in \u2026";try{let{records:s,total:o}=await pt(a,{timeoutMs:15e3}),n=ut(a,s);e.innerHTML=`\u2705 <b>Feed working.</b> ${s.length} of ${o} ${Le[a]} rows for Assam received \u2014 newest arrival date <b>${n.govDate||"\u2014"}</b>, best modal price <b>\u20B9${Math.max(...n.markets.concat(n.unknownDistance).map(l=>l.crops[a].today)).toLocaleString("en-IN")}</b>/qtl.`,la()}catch(s){e.innerHTML=`\u274C <b>Feed not reachable from here.</b> <span class="dim">${String(s.message)}</span><br><span class="dim">If you are outside India, government servers often block the request; also check the API key in
+        <code>js/config.js</code>. The app keeps working with LAST KNOWN / DEMO data either way.</span>`}finally{t.disabled=!1}})}var ca=1,Q=null;async function da(){if(Q)return Q;let t=await Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(__KM_MARKET_DATA) });if(!t.ok)throw new Error("Could not load market dataset");return Q=await t.json(),Q}function pa(t,e){return Q.markets.filter(s=>s.crops&&s.crops[t]).map(s=>{let o=s.crops[t],n=o.today,l=o.history||[],r=l.length>1?(n-l[0])/l[0]*100:0,u=s.distanceKm!=null&&isFinite(s.distanceKm),c=!!s.pickup,m=u?c?0:Math.round(s.distanceKm*ca):null,g=u?n-m:null;return{id:s.id,name:s.name,district:s.district,live:s.live||null,distanceKm:s.distanceKm,knownDistance:u,pickup:c,price:n,hist:l,trend:l.length>1?r:null,min:o.min??null,max:o.max??null,transport:m,netPerQtl:g,earnings:u?g*e:null}}).sort((s,o)=>(o.netPerQtl??-1)-(s.netPerQtl??-1))}async function vt(){let t=i.season?.crop,e=i.season?.quantityQtl||10,a=null;if(t)try{a=await mt(t)}catch(s){a={dataset:null,source:null,error:s.message}}return a?.dataset&&a.dataset.markets.length?(Q=a.dataset,i.priceSource={source:a.source,govDate:a.dataset.govDate,fromCache:a.fromCache,via:a.via||null,error:a.error||null,unknownDistance:a.dataset.unknownDistance||[]}):(await da(),i.priceSource={source:"DEMO",error:a?.error||null,unknownDistance:[]}),i.markets=t?pa(t,e):[],i.markets}function Te(){let t=document.getElementById("view-markets");if(!i.season){t.innerHTML=`<h2>Market Comparison</h2>
+      <div class="empty">Set this season's crop first \u2014 then markets will be compared for it.<br><br>
+      <span class="caveat" style="display:inline-block">Go to <b>Season &amp; Crop</b> to add it.</span></div>`;return}let e=i.priceSource||{},a=e.source==="LIVE"||e.source==="LAST KNOWN",s=e.source==="LIVE"?A():H(),o=i.season?.quantityQtl||10,n=i.markets||[],l=n.filter(p=>p.knownDistance),r=n.filter(p=>!p.knownDistance),u=e.unknownDistance||[];if(!n.length&&!u.length){t.innerHTML=`<h2>Market Comparison ${s}</h2>${He()}`;return}let c=l[0],m=l.reduce((p,E)=>p.distanceKm<E.distanceKm?p:E,l[0]),g=c?Math.round(c.price-m.price-c.transport):0,h=g*o,v=Math.max(...n.map(p=>p.price));t.innerHTML=`
+    <h2>Market Comparison ${s}</h2>
+    <p class="sub">Which market pays you the most, after transport \u2014 for <b>${o} quintals</b> this season.</p>
+    <p class="sourcenote" style="margin:-6px 0 12px">${C()}</p>
+
+    ${c?`
+    <div class="grid3">
+      <div class="card"><div class="statlabel">Best net price</div>
+        <div class="stat">${d(c.netPerQtl)}<span class="statlabel"> /q</span></div>
+        <div class="chip demo" style="margin-left:0">${c.name} \xB7 ${c.distanceKm} km</div></div>
+      <div class="card"><div class="statlabel">Extra vs nearest market</div>
+        <div class="stat ${g>=0?"":"orange"}">${g>=0?"+":""}${d(g)}<span class="statlabel"> /q</span></div>
+        <div class="statlabel">\u2248 <b>${d(h)}</b> on your harvest</div></div>
+      <div class="card"><div class="statlabel">Estimated earnings (best net)</div>
+        <div class="stat orange">${d(c.earnings)}</div>
+        <div class="statlabel">at ${c.name}, after transport</div></div>
+    </div>`:""}
+
+    <div class="card" style="margin-top:14px">
+      <div class="tablewrap">
+        <table>
+          <tr><th>Market</th><th>Distance</th><th>Price \u20B9/qtl</th><th>Recent trend</th><th>Transport</th><th>Net \u20B9/qtl</th><th>Est. total</th></tr>
+          ${l.map(p=>`
+            <tr class="${c&&p.id===c.id?"best":""}">
+              <td><b>${p.name}</b>${c&&p.id===c.id?" \u2705":""}${p.district?`<div class="statlabel">${p.district}${p.live?.variety?" \xB7 "+p.live.variety:""}${p.live?.grade?" \xB7 "+p.live.grade:""}</div>`:""}</td>
+              <td>${p.distanceKm} km</td>
+              <td>${d(p.price)}${p.min&&p.max?`<div class="statlabel">${d(p.min)}\u2013${d(p.max)}</div>`:""}</td>
+              <td class="${p.trend==null?"dim":p.trend>=0?"pos":"neg"}">${p.trend==null?"\u2014":ye(p.trend)}</td>
+              <td>${p.pickup?'<span class="dim">farm-gate</span>':"\u2212 "+d(p.transport)}</td>
+              <td class="pos">${d(p.netPerQtl)}</td>
+              <td>${d(p.earnings)}</td>
+            </tr>`).join("")}
+          ${r.map(p=>`
+            <tr>
+              <td><b>${p.name}</b>${p.district?`<div class="statlabel">${p.district}</div>`:""}</td>
+              <td class="dim">not set</td>
+              <td>${d(p.price)}</td>
+              <td class="${p.trend==null?"dim":p.trend>=0?"pos":"neg"}">${p.trend==null?"\u2014":ye(p.trend)}</td>
+              <td class="dim">\u2014</td><td class="dim">\u2014</td><td class="dim">\u2014</td>
+            </tr>`).join("")}
+        </table>
+      </div>
+      <div class="bars" style="margin-top:16px">
+        ${n.map(p=>`
+          <div class="bar">
+            <div class="val">\u20B9${p.price}</div>
+            <div class="fill ${c&&p.id===c.id?"bestf":""}" style="height:${Math.round(p.price/v*92)}px"></div>
+            <div class="lbl">${p.name.replace(/ (Mandi|Bazaar|Market|Weekly Haat)$/,"")}</div>
+          </div>`).join("")}
+      </div>
+
+      ${u.length?`<div class="caveat">\u26A0\uFE0F <b>${u.length}</b> reporting mandi${u.length>1?"s":""}
+        (${u.map(p=>p.name).join(", ")}) ${u.length>1?"have":"has"} no distance set, so
+        ${u.length>1?"they are":"it is"} shown but not ranked. Add the distance in
+        <code>js/config.js \u2192 mandiDistances</code> to compare net of transport \u2014 the app will not guess a cost.</div>`:""}
+
+      <div class="caveat">${a?`Prices: <b>AGMARKNET</b> daily market prices (Ministry of Agriculture &amp; Farmers Welfare, Govt of India)
+           released on data.gov.in \u2014 modal (most-traded) price per quintal, as reported
+           <b>${e.govDate||"\u2014"}</b>. ${e.source==="LAST KNOWN"?"The feed was unreachable just now, so this is the last figure this device saw. ":""}
+           Transport uses the distances you set in <code>js/config.js</code>; storage cost is an estimate.
+           Trends build as KrishiMitra records the government price each day.`:`Prototype dataset \u2014 <b>illustrative figures, not live market data</b>. The app switches to real
+           AGMARKNET prices from data.gov.in as soon as the government feed is reachable (see the
+           "Where these numbers come from" card on the Dashboard).`}</div>
+      <div class="sourcenote">Transport assumed at \u20B91/km/quintal${o?` \xB7 ${o} quintals this season`:""}.</div>
+    </div>`}b();b();N();function J(){let t=Object.fromEntries((i.risks||[]).map(o=>[o.id,o])),e=i.markets?.[0],a=[];t.spread&&a.push({type:"compare",title:"Compare markets before selling",detail:t.spread.title+" \u2014 travelling there may earn more, net of transport."}),t.falling&&a.push({type:"sell",title:"Consider selling now",detail:"Recent price trend is downward \u2014 holding may reduce your realisation."}),(t["rain-stage"]||t.perish)&&a.push({type:"review",title:"Review weather & crop risks",detail:"Weather and/or storage conditions make timing important right now."}),!t.falling&&e&&e.trend>2&&a.push({type:"monitor",title:"Monitor prices before selling",detail:`Prices at ${e.name} are trending upward (${e.trend.toFixed(1)}%) \u2014 watch a few more days.`}),a.length||a.push({type:"monitor",title:"No urgent signal",detail:"Nothing on the weather or price side demands an immediate decision. Re-check after the next price update."});let s=(i.risks?.length||0)<=1?"high":(i.risks?.length||0)<=3?"medium":"low";return{actions:a,confidence:s,disclaimer:"Decision-support suggestion only \u2014 not a guarantee. You decide.",inputs:{crop:i.season?.crop,stage:i.season?.stage,quantityQtl:i.season?.quantityQtl,bestMarket:e?.name,bestNet:e?.netPerQtl,risks:(i.risks||[]).map(o=>o.id),weatherFetchedAt:i.weather?.fetchedAt}}}function ie(t){let e=document.getElementById(t);e&&(e.innerHTML=le())}function re(){let t=document.getElementById("view-guidance");if(!i.season){t.innerHTML='<h2>Guidance</h2><div class="empty">Set your crop for this season to get guidance.</div>';return}if(!i.markets.length||!i.weather){t.innerHTML='<h2>Guidance</h2><div class="empty">Add your farm profile and crop \u2014 guidance appears as soon as weather and markets load.</div>';return}i.guidance=J();let e=i.guidance,a={compare:"\u{1F3EA}",sell:"\u2705",monitor:"\u{1F4C8}",review:"\u26A0\uFE0F"};t.innerHTML=`
+    <h2>Your Guidance</h2>
+    <p class="sub">Based on your farm, this season's crop, live weather and today's market comparison.</p>
+
+    ${e.actions.map(s=>`
+      <div class="gact">
+        <div class="ttl">${a[s.type]||"\u2022"} ${s.title}</div>
+        <div class="ds">${s.detail}</div>
+      </div>`).join("")}
+
+    <p style="margin:8px 0 18px">Confidence: <span class="conf ${e.confidence}">${e.confidence.toUpperCase()}</span>
+      <span class="statlabel" style="margin-left:8px">based on data freshness and how many signals are active</span></p>
+
+    <h3 style="margin:22px 0 10px">Why \u2014 the signals behind this</h3>
+    <div id="guidanceRisks"></div>
+
+    <div class="card" style="margin-top:16px">
+      <b style="color:var(--green)">Audit trail</b>
+      <p class="statlabel" style="margin-top:4px">Every guidance record is stored with the inputs it was based on \u2014 weather timestamp,
+      prices considered, rules triggered. This is how a decision-support tool stays accountable.</p>
+      <button class="btn small" id="saveGuidanceBtn" style="margin-top:10px">Save this guidance to history</button>
+      <span id="guidanceSavedMsg" class="statlabel" style="margin-left:10px"></span>
+    </div>
+
+    <div class="caveat">${e.disclaimer}</div>`,ie("guidanceRisks"),document.getElementById("saveGuidanceBtn").onclick=async()=>{await Se({recommendation:e.actions.map(s=>s.title).join(" \xB7 "),confidence:e.confidence,inputs:e.inputs}),document.getElementById("guidanceSavedMsg").textContent="Saved \u2713 (visible in your history)",y("Guidance saved to your history \u2713")}}function ua(){let{weather:t,season:e,markets:a}=i,s=[];if(!t||!e||!a||!a.length)return i.risks=s,s;let o=f[e.crop],n=t.data.daily,l=(n.precipitation_probability_max||[]).slice(0,3).map(v=>v??0),r=l.length?Math.max(...l):0,u=Math.max(...(n.temperature_2m_max||[]).slice(0,3).map(v=>v??-99)),c=a.filter(v=>v.knownDistance!==!1&&v.netPerQtl!=null),m=c[0],g=c.length?c.reduce((v,p)=>v.distanceKm<p.distanceKm?v:p):null,h=m&&g?Math.round(m.price-g.price-m.transport):0;return o&&r>=60&&o.rainSensitiveStages.includes(e.stage)&&s.push({id:"rain-stage",severity:"high",title:"Rain risk during a sensitive stage",why:`Up to ${r}% rain probability in the next 3 days, while the crop is at '${e.stage}' \u2014 the stage where ${o.label} is most weather-sensitive.`}),u>=36&&s.push({id:"heat",severity:"medium",title:"Heat stress likely",why:`Forecast highs up to ${Math.round(u)}\xB0C in the next 3 days.`}),m.trend<=-4&&s.push({id:"falling",severity:"high",title:"Prices falling recently",why:`${m.name} is ${m.trend.toFixed(1)}% over the recent period \u2014 waiting may cost you money.`}),h>=100&&s.push({id:"spread",severity:"opportunity",title:`\u20B9${h}/quintal available at ${m.name}`,why:`${m.name} pays \u20B9${m.price} vs \u20B9${g.price} at ${g.name}, minus \u20B9${m.transport}/qtl transport to get there \u2014 net +\u20B9${h}/qtl, \u2248 \u20B9${h*(e.quantityQtl||0)} on ${e.quantityQtl} quintals.`}),o&&o.perishable&&o.storageLifeDays<=7&&s.push({id:"perish",severity:"medium",title:`Short storage life (~${o.storageLifeDays} days)`,why:`${o.label} cannot wait long \u2014 decide within days, not weeks.`}),i.risks=s,s}function yt(){return ua(),ie("dashRisks"),ie("guidanceRisks"),i.risks}function le(){return!i.risks||!i.risks.length?'<p class="empty">No risk signals with the current data \u2014 that is itself information: nothing urgent on the weather or price side.</p>':i.risks.map(t=>`
+    <div class="risk ${t.severity}">
+      <div class="t">${t.severity==="opportunity"?"\u{1F4B0}":t.severity==="high"?"\u26A0\uFE0F":"\u2022"} ${t.title}</div>
+      <div class="why">${t.why}</div>
+    </div>`).join("")}b();var De={apiKey:"PASTE_FIREBASE_API_KEY",authDomain:"PASTE.firebaseapp.com",projectId:"PASTE_PROJECT_ID",storageBucket:"PASTE.appspot.com",messagingSenderId:"PASTE_SENDER_ID",appId:"PASTE_APP_ID"},ce="PASTE_GEMINI_KEY",ft="gemini-flash-latest",de={apiKey:"PASTE_FREE_DATA_GOV_KEY",enabled:!0,maxAgeHours:12,proxyBase:"",personaName:"Ramen",referenceMandi:"Dibrugarh",mandiDistances:{Duliajan:3,Naharkatia:12,Digboi:15,Namrup:25,Jorhat:90,Tinsukia:45,Sivasagar:60,Dibrugarh:45,Golaghat:70,Nagaon:150,Sonari:30,Margherita:40}};var ma=`https://generativelanguage.googleapis.com/v1beta/models/${ft}:generateContent`;function ha(){return!!ce&&!ce.startsWith("PASTE")}function ga(){let t=i.profile||{},e=i.season||{},a=f[e.crop],s=i.weather?.data,o=s?{current:`${Math.round(s.current.temperature_2m)}\xB0C, humidity ${s.current.relative_humidity_2m}%`,next3:(s.daily.precipitation_probability_max||[]).slice(0,3).map(l=>(l??0)+"%").join(", "),maxT:Math.round(Math.max(...(s.daily.temperature_2m_max||[]).slice(0,3).map(l=>l??0)))}:null,n=(i.markets||[]).slice(0,4).map(l=>`${l.name}: \u20B9${l.price}/qtl, ${l.distanceKm} km, net \u20B9${l.netPerQtl}/qtl`).join("; ");return`You are KrishiMitra, an agricultural decision-support assistant for Indian farmers.
+
+STRICT RULES:
+- Suggest, never guarantee. Never promise prices, profits or weather outcomes.
+- Use ONLY the farm context below plus general crop knowledge. If data is missing, say so plainly.
+- Plain language, 120 words maximum, no jargon. Prefer short sentences.
+- If the question is not about farming, crops, weather or markets, politely redirect.
+- Never invent market prices or prices not listed below.
+- Where relevant, finish with one practical next step.
+
+FARM CONTEXT (today's data):
+Farm: ${t.acres??"?"} acres, soil ${t.soil??"?"}, irrigation ${t.irrigation??"?"}, near ${t.village??"?"}
+Crop this season: ${a?a.label:e.crop??"none set"}${e.variety?" ("+e.variety+")":""}, stage: ${e.stage??"?"}, expected quantity: ${e.quantityQtl??"?"} quintals, sown: ${e.sowingDate??"?"}
+Weather: ${o?`${o.current}; next-3-day rain chances ${o.next3}; max temp ${o.maxT}\xB0C`:"unavailable"}
+Market prices (PROTOTYPE data, labelled DEMO): ${n||"unavailable"}
+Note: market prices are simulated for the prototype; weather is live. Be transparent if asked.`}async function va(t){let e={systemInstruction:{parts:[{text:ga()}]},contents:[{role:"user",parts:[{text:t}]}],generationConfig:{temperature:.4,maxOutputTokens:350}},a=await fetch(ma,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":ce},body:JSON.stringify(e)});if(!a.ok)throw new Error("Gemini HTTP "+a.status);let o=(await a.json()).candidates?.[0]?.content?.parts?.map(n=>n.text).join("")||"";if(!o)throw new Error("Empty response from Gemini");return o.trim()}var ya=["Should I sell my crop this week?","What does the rain forecast mean for my crop?","Which market is best for me today?"];function bt(){let t=document.getElementById("view-assistant");t.innerHTML=`
+    <h2>Ask KrishiMitra</h2>
+    <p class="sub">Answers use your farm, your crop and today's weather and market context.</p>
+    <div class="quick">
+      ${ya.map(n=>`<button data-q="${n}">${n}</button>`).join("")}
+    </div>
+    <div id="chatlog"></div>
+    <div class="chatrow">
+      <input id="chatInput" placeholder="Ask about your crop, weather or markets\u2026">
+      <button class="btn" id="chatSend">Ask</button>
+    </div>
+    <div class="caveat">AI-assisted interpretation only \u2014 decision support, not a guarantee. If the assistant is unavailable,
+    you'll be shown your rule-based guidance instead.</div>`;let e=document.getElementById("chatlog"),a=document.getElementById("chatInput"),s=(n,l)=>{let r=document.createElement("div");return r.className="msg "+l,r.textContent=n,e.appendChild(r),e.scrollTop=e.scrollHeight,r};async function o(n){if(!n||!n.trim())return;if(a.value="",s(n,"user"),!ha()){let r=J();s("Demo mode \u2014 AI answers are off until a Gemini key is added in js/config.js. Here is your rule-based guidance instead:","sys"),s(r.actions.map(u=>"\u2022 "+u.title+" \u2014 "+u.detail).join(`
+
+`)+`
+
+\u2014 generated by the rules engine, not AI.`,"ai"),y("AI off (no key) \u2014 showing rule-based guidance");return}let l=s("Thinking\u2026","sys");try{let r=await va(n);l.remove(),s(r,"ai")}catch(r){l.remove(),s("The AI assistant is temporarily unavailable \u2014 here is your rule-based guidance instead. Open the Guidance tab for the full view.","sys"),y("AI unavailable \u2014 rule-based guidance is ready in the Guidance tab"),console.warn("Gemini error:",r.message)}}document.getElementById("chatSend").onclick=()=>o(a.value),a.addEventListener("keydown",n=>{n.key==="Enter"&&o(a.value)}),t.querySelectorAll(".quick button").forEach(n=>n.onclick=()=>o(n.dataset.q))}var wt="media/demo.mp4",$t="media/poster.jpg";function fa(){if(document.getElementById("videoModal"))return;let t=document.createElement("div");t.id="videoModal",t.className="vmodal",t.setAttribute("role","dialog"),t.setAttribute("aria-modal","true"),t.setAttribute("aria-label","KrishiMitra demo video"),t.innerHTML=`
+    <div class="vmodal-box">
+      <button class="vmodal-close" id="videoClose" aria-label="Close video">\u2715</button>
+      <video id="demoVideo" controls playsinline preload="metadata" poster="${$t}">
+        <source src="${wt}" type="video/mp4">
+      </video>
+      <div class="vmodal-missing" id="videoMissing" style="display:none">
+        <b>Demo video file not found.</b>
+        Keep the <code>media</code> folder (containing <code>demo.mp4</code>) next to this page,
+        or open the hosted version of the site.
+      </div>
+      <div class="vmodal-note">
+        <b>KrishiMitra walkthrough</b> \xB7 2 min 15 s
+        <span class="vsep">\xB7</span>
+        <a href="${wt}" download>Download the video</a>
+        <span class="dim">Prices shown are ILLUSTRATIVE DEMO DATA.</span>
+      </div>
+    </div>`,document.body.appendChild(t);let e=t.querySelector("#demoVideo"),a=t.querySelector("#videoMissing"),s=()=>{a.style.display="block",e.style.display="none"};e.addEventListener("error",s);let o=e.querySelector("source");o&&o.addEventListener("error",s),t.querySelector("#videoClose").onclick=pe,t.addEventListener("click",n=>{n.target===t&&pe()})}function kt(){fa(),document.getElementById("videoModal").classList.add("open"),document.body.classList.add("noscroll");let e=document.getElementById("demoVideo");if(e&&e.style.display!=="none"){let a=e.play();a&&a.catch&&a.catch(()=>{})}}function pe(){let t=document.getElementById("videoModal");if(!t)return;t.classList.remove("open"),document.body.classList.remove("noscroll");let e=document.getElementById("demoVideo");e&&e.pause()}function xt(){return`
+    <div class="vcard" onclick="window.kmOpenVideo && window.kmOpenVideo()" role="button" tabindex="0">
+      <img class="vthumb" src="${$t}" alt="" onerror="this.style.display='none'">
+      <div class="vmeta">
+        <b>See KrishiMitra in action</b>
+        <span class="dim">2-minute walkthrough \u2014 sell decision, market comparison, alerts &amp; recent sales.</span>
+      </div>
+      <span class="btn orange small vplay">\u25B6 Watch demo</span>
+    </div>`}function Ae(){let t=document.getElementById("topbar");if(!t||document.getElementById("demoVideoBtn"))return;let e=document.createElement("button");e.id="demoVideoBtn",e.className="btn orange small",e.type="button",e.textContent="\u25B6 Watch demo",e.onclick=kt;let a=document.getElementById("installBtn");a&&a.parentNode===t?t.insertBefore(e,a):t.appendChild(e)}window.kmOpenVideo=kt;window.kmCloseVideo=pe;document.addEventListener("keydown",t=>{t.key==="Escape"&&pe()});document.readyState==="loading"?document.addEventListener("DOMContentLoaded",Ae):Ae();document.addEventListener("km:app-shown",Ae);b();function St({points:t,avg:e,labels:a,activeRange:s,unit:o="\u20B9",id:n="trend"}){let h=t.length;if(h<2)return`<div class="chartwrap"><div class="empty" style="padding:26px 10px">
+      Only <b>${h}</b> recorded day so far \u2014 the trend line appears from day 2.
+      <div class="dim" style="font-size:12px;margin-top:6px">KrishiMitra records the government price each day it is opened.</div>
+    </div></div>`;let v=Math.min(...t,e??1/0),p=Math.max(...t,e??-1/0),E=Math.max(p-v,1),me=v-E*.12,Y=p+E*.12,x=w=>54+w*652/(h-1),$=w=>16+(1-(w-me)/(Y-me))*168,Z=t.map((w,T)=>`${T?"L":"M"}${x(T).toFixed(1)},${$(w).toFixed(1)}`).join(" "),M=`${Z} L${x(h-1).toFixed(1)},184 L${x(0).toFixed(1)},184 Z`,L=[p,(p+v)/2,v].map(w=>`
+    <line x1="54" x2="706" y1="${$(w).toFixed(1)}" y2="${$(w).toFixed(1)}" stroke="#E3EFE6" stroke-width="1"/>
+    <text x="46" y="${($(w)+4).toFixed(1)}" text-anchor="end" font-size="11" fill="#5C6B62">${o}${Math.round(w).toLocaleString("en-IN")}</text>`).join(""),I=(a||[]).map((w,T)=>T===0||T===h-1||T===Math.floor(h/2)?`<text x="${x(T).toFixed(1)}" y="202" text-anchor="middle" font-size="11" fill="#5C6B62">${w}</text>`:"").join(""),R=e?`
+    <line x1="54" x2="706" y1="${$(e).toFixed(1)}" y2="${$(e).toFixed(1)}"
+          stroke="#F28C28" stroke-width="1.4" stroke-dasharray="5 4"/>
+    <text x="706" y="${($(e)-6).toFixed(1)}" text-anchor="end" font-size="11" fill="#8A4A12">
+      average ${o}${Math.round(e).toLocaleString("en-IN")}</text>`:"",j=t[h-1];return`
+    <div class="chartwrap">
+      <svg viewBox="0 0 720 210" class="chart" role="img"
+           aria-label="Price trend, ${h} recorded days, latest ${o}${j}">
+        ${L}
+        <path d="${M}" fill="rgba(28,127,75,.12)"/>
+        <path d="${Z}" fill="none" stroke="#1B7F4B" stroke-width="2.4" stroke-linejoin="round"/>
+        ${R}
+        <circle cx="${x(h-1).toFixed(1)}" cy="${$(j).toFixed(1)}" r="4.5" fill="#0F5132"/>
+        <text x="${(x(h-1)-6).toFixed(1)}" y="${($(j)-10).toFixed(1)}" text-anchor="end"
+              font-size="12" font-weight="700" fill="#0F5132">${o}${j.toLocaleString("en-IN")}</text>
+        ${I}
+      </svg>
+      <div class="chartfoot">
+        <span class="dim">${h} recorded day${h>1?"s":""}${s>=90&&h<90?" \u2014 showing all recorded days":""}</span>
+      </div>
+    </div>`}function Et(t,e="CONFIDENCE"){let a=Math.max(0,Math.min(100,Math.round(t))),s=34,o=2*Math.PI*s,n=a/100*o;return`
+    <div class="ring" title="${a}% \u2014 computed from data coverage, price spread and weather risk">
+      <svg viewBox="0 0 84 84" class="ringsvg">
+        <circle cx="42" cy="42" r="${s}" fill="none" stroke="#E3EFE6" stroke-width="8"/>
+        <circle cx="42" cy="42" r="${s}" fill="none" stroke="#1B7F4B" stroke-width="8"
+                stroke-linecap="round" stroke-dasharray="${n.toFixed(1)} ${(o-n).toFixed(1)}"
+                transform="rotate(-90 42 42)"/>
+        <text x="42" y="47" text-anchor="middle" font-size="17" font-weight="800" fill="#0F5132">${a}%</text>
+      </svg>
+      <div class="ringlabel">${e}</div>
+    </div>`}b();var Mt="km_sales_v1",ba=[{id:"s-demo-1",date:"2026-09-12",crop:"paddy",market:"Village trader",qty:8,price:2050},{id:"s-demo-2",date:"2026-09-26",crop:"paddy",market:"Tinsukia Mandi",qty:6,price:2240}],Pe=null;function B(){try{let t=(window.__kmSafeLS||localStorage).getItem(Mt);return JSON.parse(t||"null")||Pe||[]}catch{return Pe||[]}}function qe(t){Pe=t;try{(window.__kmSafeLS||localStorage).setItem(Mt,JSON.stringify(t))}catch{}}function Lt(t){t&&(B().length||qe(ba))}function wa(t){let e=B();return e.unshift({...t,id:"s"+Date.now()}),qe(e),e}function $a(t){let e=B().filter(a=>a.id!==t);return qe(e),e}var Ce=t=>{let e=new Date(t+"T00:00:00");return isNaN(e)?t:e.toLocaleDateString("en-IN",{day:"numeric",month:"short"})};function It(){let t=B(),e=t.reduce((s,o)=>(s.qty+=o.qty||0,s.value+=(o.qty||0)*(o.price||0),s),{qty:0,value:0}),a=t.slice().sort((s,o)=>(o.price||0)-(s.price||0))[0]||null;return{count:t.length,totalQtl:e.qty,totalValue:e.value,avgPrice:e.qty?Math.round(e.value/e.qty):0,bestSale:a}}function Tt(){let t=It();return t.count?`
+    <div class="card" style="margin-top:14px">
+      <b style="color:var(--green)">Your recent sales</b>
+      <div class="statlabel" style="margin-top:6px">from your history</div>
+      <div class="salelist">
+        ${B().slice(0,3).map(e=>`
+          <div class="salerow">
+            <span class="saledate">${Ce(e.date)}</span>
+            <span class="salemkt">${e.market}</span>
+            <span class="saleprice">${d(e.price)}<span class="dim">/qtl</span></span>
+          </div>`).join("")}
+      </div>
+      <div class="sourcenote">${t.totalQtl} quintals sold so far \xB7 average ${d(t.avgPrice)}/qtl</div>
+    </div>`:""}function q(){let t=document.getElementById("view-sales");if(!t)return;let e=B(),a=It(),s=Object.entries(f||{}).map(([n,l])=>`<option value="${n}" ${n===i.season?.crop?"selected":""}>${l.label}</option>`).join(""),o=(i.markets||[]).map(n=>`<option value="${n.name}">${n.name}</option>`).join("");t.innerHTML=`
+    <h2>My sales ${i.demo?H():""}</h2>
+    <p class="sub">Log what you actually sold \u2014 the app uses it to track your real average price.</p>
+
+    <div class="card">
+      <div class="grid3">
+        <div><div class="statlabel">Total sold</div><div class="stat">${a.totalQtl}<span class="statlabel"> qtl</span></div></div>
+        <div><div class="statlabel">Total value</div><div class="stat orange">${d(a.totalValue)}</div></div>
+        <div><div class="statlabel">Your average price</div><div class="stat">${d(a.avgPrice)}<span class="statlabel"> /qtl</span></div></div>
+      </div>
+      ${a.bestSale?`<div class="sourcenote">Best sale: ${d(a.bestSale.price)}/qtl at ${a.bestSale.market} on ${Ce(a.bestSale.date)}.</div>`:""}
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <b>Record a sale</b>
+      <div class="frow" style="margin-top:10px">
+        <label>Date<input id="slDate" type="date" value="${new Date().toISOString().slice(0,10)}"></label>
+        <label>Crop<select id="slCrop">${s}</select></label>
+        <label>Market
+          ${o?`<select id="slMarket">${o}</select>`:'<input id="slMarket" type="text" placeholder="e.g. Jorhat Mandi">'}
+        </label>
+        <label>Quantity (quintals)<input id="slQty" type="number" min="0.1" step="0.1" value="${i.season?.quantityQtl??""}"></label>
+        <label>Price \u20B9/quintal<input id="slPrice" type="number" min="1" step="1" placeholder="e.g. 2310"></label>
+        <button class="btn" id="slAdd">Add sale</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <b>Your sales history</b>
+      ${e.length?`
+        <div class="tablewrap" style="margin-top:10px">
+          <table>
+            <tr><th>Date</th><th>Crop</th><th>Market</th><th>Qty (qtl)</th><th>Price \u20B9/qtl</th><th>Value</th><th></th></tr>
+            ${e.map(n=>`
+              <tr>
+                <td>${Ce(n.date)}</td>
+                <td>${f?.[n.crop]?.label||n.crop}</td>
+                <td><b>${n.market}</b></td>
+                <td>${n.qty}</td>
+                <td>${d(n.price)}</td>
+                <td class="pos">${d((n.qty||0)*(n.price||0))}</td>
+                <td><button class="btnlink" data-del="${n.id}">remove</button></td>
+              </tr>`).join("")}
+          </table>
+        </div>`:`<div class="empty">No sales recorded yet. Add the first one above \u2014 or set the crop in
+           <b>Season &amp; Crop</b> so the market list can suggest where you sold.</div>`}
+      ${i.demo&&e.some(n=>String(n.id).startsWith("s-demo"))?`
+        <div class="caveat">The two rows dated 12 Sep and 26 Sep are <b>DEMO examples</b> (they match the walkthrough
+        video). Remove them and add your own real sales \u2014 everything else updates from your numbers.</div>`:""}
+      <div class="sourcenote">Saved on this device only${i.demo?" (demo mode)":""}. Nothing is uploaded.</div>
+    </div>
+  `,document.getElementById("slAdd").onclick=()=>{let n={date:document.getElementById("slDate").value||new Date().toISOString().slice(0,10),crop:document.getElementById("slCrop").value,market:document.getElementById("slMarket").value.trim()||"\u2014",qty:Number(document.getElementById("slQty").value)||0,price:Number(document.getElementById("slPrice").value)||0};if(!n.qty||!n.price)return y("Add quantity and price per quintal.");wa(n),y("Sale recorded \u2713"),q()},t.querySelectorAll("[data-del]").forEach(n=>n.onclick=()=>{$a(n.dataset.del),y("Removed"),q()})}var z=180,ka="\u20B91/km/quintal",Dt=.4,X=30,Ne="",Ct="Ramen";function qt(t){Ne=String(t||"").trim()}function Bt(t){t&&(Ct=String(t).trim())}var Be=(t,e,a)=>Math.max(e,Math.min(a,t)),xa=t=>t.length?t.reduce((e,a)=>e+a,0)/t.length:0,O=(t,e=1)=>Number(t).toLocaleString("en-IN",{maximumFractionDigits:e});function Sa(){let t=new Date().getHours();return t<12?"Good morning":t<17?"Good afternoon":"Good evening"}function Ea(){return new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}function Nt(t){let e=(t||[]).filter(n=>n.knownDistance),a=e.length?e:t||[];if(!a.length)return null;let s=a.filter(n=>!/trader|village/i.test(n.name)),o=s.length?s:a;if(Ne){let n=o.find(l=>l.name.toLowerCase().includes(Ne.toLowerCase()));if(n)return n}return o.slice().sort((n,l)=>n.distanceKm-l.distanceKm||n.name.localeCompare(l.name))[0]}function Ot(t,e=X){let a=Nt(t);if(!a)return{points:[],labels:[],avg:0,market:null,source:null};let o=(a.hist||[]).slice(-e);return{points:o,labels:o.map((n,l)=>`day ${l+1}`),avg:xa(o),market:a,source:i.priceSource?.source||"DEMO"}}function Ma(){let t=i.weather?.data?.daily;if(!t||!t.time?.length)return'<div class="wstrip"><div class="sourcenote">Live weather unavailable right now \u2014 the 5-day strip appears as soon as the connection returns. Everything else on this screen is unaffected.</div></div>';let e=t.time.slice(0,5),a=t.temperature_2m_max||[],s=t.precipitation_probability_max||[],o=e.map((u,c)=>{let m=new Date(u+"T00:00:00"),g=c===0?"Today":m.toLocaleDateString("en-IN",{weekday:"short"}),h=a[c]!=null?Math.round(a[c])+"\xB0":"\u2014",v=s[c]!=null?Math.round(s[c])+"%":"\u2013";return`<div class="wcell ${(s[c]??0)>=50?"wet":""}"><div class="wd">${g}</div><div class="wt">${h}</div><div class="wr">\u{1F4A7}${v}</div></div>`}).join(""),n=s.slice(0,3).map(u=>u??0),l=n.length?Math.max(...n):0,r=l>=60?`Rain is likely within 3 days (up to ${Math.round(l)}%) \u2014 plan harvest, transport and drying before it arrives.`:l>=40?`Some rain possible (${Math.round(l)}%) \u2014 keep drying covers and tarps ready.`:"Good drying window: no significant rain expected in the next 3 days.";return`
+    <div class="wstrip">
+      <div class="whead"><b>Field weather</b> <span class="chip live">LIVE</span>
+        <span class="dim">Open-Meteo \xB7 ${i.profile?.village||"your location"}</span></div>
+      <div class="wrow">${o}</div>
+      <div class="wadv">${r}</div>
+    </div>`}function La(t){let e=B();if(!e.length||!t)return"";let a=e.slice().sort((u,c)=>String(c.date||"").localeCompare(String(u.date||"")))[0],s=t-a.price,o=a.price?s/a.price*100:0,n=e.reduce((u,c)=>(u.q+=c.qty||0,u.v+=(c.qty||0)*(c.price||0),u),{q:0,v:0}),l=n.q?Math.round(n.v/n.q):0,r=u=>{let c=new Date(u+"T00:00:00");return isNaN(c)?u:c.toLocaleDateString("en-IN",{day:"numeric",month:"short"})};return`
+    <div class="bench">
+      <div>
+        <div class="statlabel">Your last sale</div>
+        <div class="bnum">${d(a.price)}<span class="dim">/qtl</span></div>
+        <div class="statlabel">${r(a.date)} \xB7 ${a.market}</div>
+      </div>
+      <div class="bmid">
+        <div class="statlabel">Today's best net</div>
+        <div class="bnum ${s>=0?"pos":"neg"}">${d(t)}<span class="dim">/qtl</span></div>
+        <div class="statlabel">${s>=0?"+":""}${d(Math.round(s))} ${s>=0?"higher":"lower"} (${o>=0?"+":""}${o.toFixed(1)}%)</div>
+      </div>
+      <div class="bend">
+        <div class="statlabel">This season</div>
+        <div class="statlabel" style="margin-top:4px">${O(n.q)} quintals sold \xB7 <b>${d(n.v)}</b> total</div>
+        <div class="statlabel">your average ${d(l)}/qtl</div>
+      </div>
+    </div>`}function Oe(){let t=i.markets||[],e=t.filter(S=>S.knownDistance&&S.netPerQtl!=null),a=Nt(t),s=i.season||{},o=f?.[s.crop]||{},n=s.quantityQtl||0,{points:l,avg:r}=Ot(t),u=a?.price??0,c=r?(u-r)/r*100:0,m=e[0]||null,g=e.length?e.reduce((S,F)=>S.distanceKm<F.distanceKm?S:F):null,h=m&&g?m.netPerQtl-g.netPerQtl:0,p=(i.weather?.data?.daily?.precipitation_probability_max||[]).slice(0,3).map(S=>S??0),E=p.length?Math.max(...p):0,Y=!!(o.rainSensitiveStages&&o.rainSensitiveStages.includes(s.stage))&&E>=60,x=(o.storageLifeDays||0)>21,$=x?Math.min(4,Math.floor((o.storageLifeDays||0)/7)):0,Z=Math.round(z*$),M="WAIT",L="wait",I=[],R=null;if(!a||!m)M="WAIT",L="wait",I=["Add this season's crop and quantity \u2014 the decision needs a price series and a market list."];else if(Y)M="SELL ALL NOW",L="sell",I=[`Up to <b>${Math.round(E)}%</b> rain probability in the next 3 days while ${o.label||"the crop"} is at <b>${s.stage}</b> \u2014 the stage most at risk.`,h>0?`Best net market: <b>${m.name}</b> at ${d(m.netPerQtl)}/qtl after transport.`:`Nearest market pays <b>${d(a.price)}</b>/qtl today.`,`Price is <b>${Math.abs(c).toFixed(1)}%</b> ${c>=0?"above":"below"} your ${l.length}-day average of ${d(Math.round(r))} \u2014 do not gamble the crop against the weather.`];else if(c>=1.5&&x){let S=Math.round(n*(1-Dt)*10)/10,F=Math.round(n*Dt*10)/10;M="SELL 60% NOW",L="sell",R={sellQty:S,holdQty:F,sellValue:S*m.netPerQtl,holdValueToday:F*a.price,holdWeeks:$},I=[`Price is <b>${c.toFixed(1)}% above</b> your ${l.length}-day average \u2014 a good level to lock in.`,h>0?`<b>${m.name}</b> pays ${d(m.price)} vs ${d(g.price)} at ${g.name}, minus ${d(m.transport)}/qtl transport \u2014 net <b>+${d(h)}/qtl</b>.`:"Your nearest market already pays the best net price today.",`The crop stores about <b>${o.storageLifeDays} days</b>, so sell <b>${O(S)} qtl</b> now (${d(R.sellValue)}) and hold <b>${O(F)} qtl</b> worth ${d(R.holdValueToday)} at today's price \u2014 storage costs ${d(z)}/qtl/week.`]}else c>=1.5?(M="SELL ALL NOW",L="sell",I=[`Price is <b>${c.toFixed(1)}% above</b> your ${l.length}-day average \u2014 a good level to lock in.`,h>0?`<b>${m.name}</b> pays ${d(m.price)} vs ${d(g.price)} at ${g.name}, minus ${d(m.transport)}/qtl transport \u2014 net <b>+${d(h)}/qtl</b>.`:"Your nearest market already pays the best net price today.",`${o.label||"This crop"} keeps only ~${o.storageLifeDays||"a few"} days, so taking today's price beats gambling on storage.`]):x&&c<-1.5?(M="STORE",L="store",I=[`Price is <b>${Math.abs(c).toFixed(1)}% below</b> your ${l.length}-day average of ${d(Math.round(r))}.`,`The crop stores for about <b>${o.storageLifeDays} days</b>, so holding is an option \u2014 at ${d(z)}/qtl/week storage.`,`Re-check when the price crosses <b>${d(Math.round(r))}</b>.`]):(M="WAIT",L="wait",I=[`Price is close to your ${l.length}-day average (${d(Math.round(r))}) \u2014 no clear signal either way today.`,h>0?`If you sell, <b>${m.name}</b> is best: ${d(m.netPerQtl)}/qtl net.`:"Your nearest market is competitive today.",`Watch for the price to move ${d(Math.round(r*.02))} either side of the average.`]);let j=Be(l.length/30*25,0,25),w=m&&g&&g.price?Be((m.price-g.price)/g.price*100*8,0,25):0,T={LIVE:25,"LAST KNOWN":12,DEMO:15}[i.priceSource?.source]??10,jt=Y?8:25,Ft=Math.round(Be(j+w+T+jt,40,95));return{verdict:M,verdictClass:L,headlines:I,confidence:Ft,split:R,local:a,best:m,nearest:g,qty:n,crop:o,season:s,today:u,avg:r,points:l,abovePct:c,spreadNet:h,storable:x,storageWeeks:$,storageCost:Z,rainRisk:Y,maxRain:E,signals:{days:l.length,markets:e.length,stage:s.stage||"\u2014",rainDays:p.length,storagePerQtlWeek:z}}}function _(){let t=document.getElementById("view-sell");if(!t)return;if(!i.season){t.innerHTML=`<h2>Sell decision</h2>
+      <div class="empty">Set your crop first \u2014 one screen, four fields.<br><br>
+      <button class="btn" onclick="window.kmFocusSellForm && window.kmFocusSellForm()">Fill the form below</button></div>
+      ${At()}`,Pt();return}let e=Oe(),s=(i.priceSource||{}).source==="LIVE"?A():H(),o=e.crop.label||e.season.crop;t.innerHTML=`
+    <div class="greet">
+      <div class="gdate">${Ea()}</div>
+      <h1 class="ghello">${Sa()}, ${Ct}.</h1>
+      <p class="gsub">Here's what the market is telling you about your <b>${o.toLowerCase()}</b> crop today${e.local?` \xB7 ${i.profile?.village||""}`:""}.</p>
+    </div>
+
+    <h2>Sell decision ${s}</h2>
+    <p class="sub">Combines prices, your harvest window, weather and storage into one call \u2014 change any field and it recalculates.</p>
+    ${At()}
+
+    <div class="card verdict ${e.verdictClass}" style="margin-top:14px">
+      <div class="vrow">
+        <div class="vleft">
+          <div class="veyebrow">KRISHIMITRA RECOMMENDS</div>
+          <div class="vcall">${e.verdict}</div>
+          <div class="vbest">${e.best?`Best market: <b>${e.best.name}</b> \xB7 ${d(e.best.price)} / quintal`:"Not enough market data yet"}</div>
+        </div>
+        <div class="vright">${Et(e.confidence)}</div>
+      </div>
+      <ul class="vreasons">
+        ${e.headlines.map(n=>`<li>${n}</li>`).join("")}
+      </ul>
+      <div class="sourcenote">${C()}</div>
+    </div>
+
+    ${Ma()}
+
+    <div class="grid2" style="margin-top:14px">
+      <div class="card">
+        <div class="cardhead">
+          <b>${X}-day price trend</b>
+          <div class="pills">
+            ${[90,30,7].map(n=>`<button class="pill ${n===X?"on":""}" data-range="${n}">${n} days</button>`).join("")}
+          </div>
+        </div>
+        <div class="statlabel">${o}${e.season.variety?` (${e.season.variety})`:""}, ${e.local?e.local.name:"local market"}</div>
+        ${St({...Ot(i.markets),activeRange:X})}
+      </div>
+
+      <div class="card">
+        <b>What you would actually earn</b>
+        <div class="earn">${e.best?d(e.best.earnings):"\u2014"}</div>
+        <div class="statlabel">${e.best?`at ${e.best.name}, after transport \u2014 ${d(e.best.netPerQtl)}/qtl net \xD7 ${O(e.qty)} quintals`:"set your harvest quantity to see this"}</div>
+        <table class="minitable">
+          <tr><td>Gross @ ${e.best?d(e.best.price):"\u2014"}/qtl</td><td>${e.best?d(e.best.price*e.qty):"\u2014"}</td></tr>
+          <tr><td>Transport (${e.best?e.best.distanceKm+" km":"\u2014"})</td><td>\u2212 ${e.best?d(e.best.transport*e.qty):"\u2014"}</td></tr>
+          <tr class="tot"><td>Net to you</td><td>${e.best?d(e.best.earnings):"\u2014"}</td></tr>
+        </table>
+        ${e.split?`
+        <div class="splitbox">
+          <b>Sell ${O(e.split.sellQty)} qtl now</b> \u2192 ${d(e.split.sellValue)}<br>
+          <span class="dim">Hold ${O(e.split.holdQty)} qtl (worth ${d(e.split.holdValueToday)} at today's price) \xB7 storage ${d(z)}/qtl/week</span>
+        </div>`:""}
+        ${Ia(e)}
+        <div class="sourcenote">Transport assumption ${ka} using the distances in <code>js/config.js</code>.</div>
+      </div>
+    </div>
+
+    ${La(e.best?e.best.netPerQtl:0)}
+
+    <div class="signals">
+      <b>Signals used:</b>
+      ${e.signals.days} days of mandi prices \xB7
+      ${e.signals.markets} nearby markets \xB7
+      harvest window (${e.signals.stage}) \xB7
+      ${e.signals.rainDays}-day live weather \xB7
+      storage ${d(e.signals.storagePerQtlWeek)}/qtl/week
+    </div>
+
+    ${e.best&&e.verdict.startsWith("SELL")?`
+      <div class="card cta" style="margin-top:12px">
+        <b>Ready to sell?</b>
+        <div class="dim" style="margin-top:4px">Log the sale in <b>My sales</b> so the trend and your benchmark build up.</div>
+        <button class="btn orange small" style="margin-top:8px" onclick="document.querySelector('[data-view=sales]').click()">Go to My sales \u2192</button>
+      </div>`:""}
+  `,Pt(),t.querySelectorAll(".pill").forEach(n=>n.onclick=()=>{X=Number(n.dataset.range),_()})}function Ia(t){let e=(i.markets||[]).filter(n=>n.knownDistance&&n.netPerQtl!=null);if(!e.length)return"";let a=[];t.best&&a.push({label:`${t.best.name} \xB7 best net`,r:t.best});let s=t.local;s&&s.id!==t.best?.id&&a.push({label:`${s.name} \xB7 your market`,r:s});let o=e.find(n=>n.pickup);return o&&!a.some(n=>n.r.id===o.id)&&a.push({label:`${o.name} \xB7 farm-gate (no transport)`,r:o}),a.length<2?"":`
+    <table class="minitable opttable">
+      <tr><td colspan="2"><b>Compare earning options</b> <span class="dim">(your ${O(t.qty)} quintals, net)</span></td></tr>
+      ${a.map(n=>`<tr><td>${n.label}</td><td>${d(n.r.netPerQtl*t.qty)}</td></tr>`).join("")}
+    </table>`}function At(){let t=i.season||{},e=i.profile||{};return`
+    <div class="card sellform" id="sellForm">
+      <div class="frow">
+        <label>Crop
+          <select id="sfCrop">${Object.entries(f||{}).map(([s,o])=>`<option value="${s}" ${s===t.crop?"selected":""}>${o.label}</option>`).join("")}</select>
+        </label>
+        <label>Location (village / town)
+          <input id="sfLoc" type="text" value="${e.village||""}" placeholder="e.g. Duliajan">
+        </label>
+        <label>Area (acres)
+          <input id="sfArea" type="number" min="0.1" step="0.1" value="${e.acres??""}">
+        </label>
+        <label>Expected harvest (quintals)
+          <input id="sfQty" type="number" min="0.1" step="0.1" value="${t.quantityQtl??""}" placeholder="e.g. 27.6">
+        </label>
+        <button class="btn" id="sfGo">Get my call</button>
+      </div>
+      <div class="sourcenote">Stored with your profile \u2014 set once, only the crop changes each season.</div>
+    </div>`}function Pt(){let t=document.getElementById("sfGo");t&&(t.onclick=async()=>{let e=document.getElementById("sfCrop").value,a=document.getElementById("sfLoc").value.trim(),s=Number(document.getElementById("sfArea").value)||0,o=Number(document.getElementById("sfQty").value)||0;i.profile={...i.profile||{},village:a||i.profile?.village,acres:s||i.profile?.acres},i.season={...i.season||{},crop:e,quantityQtl:o||i.season?.quantityQtl};try{if(i.demo)localStorage.setItem("km_demo_profile",JSON.stringify(i.profile)),localStorage.setItem("km_demo_season",JSON.stringify(i.season));else{let n=await Promise.resolve().then(()=>(N(),te));await n.saveProfile(i.profile),await n.saveSeason(i.season)}y("Saved \u2014 recalculating your call\u2026"),document.dispatchEvent(new CustomEvent("km:data-changed"))}catch(n){y("Could not save: "+n.message)}})}function _t(){document.querySelector("[data-view=sell]")?.click(),setTimeout(()=>document.getElementById("sfQty")?.focus(),80)}b();function Ta(){let t=[],e=Oe(),a=i.priceSource||{},s=e.crop||{};return e.rainRisk&&t.push({level:"high",title:`Rain risk in the next 3 days (up to ${e.maxRain}%)`,why:`${s.label||"Your crop"} is at '${e.season?.stage}' \u2014 a stage that ${s.label||"it"} is sensitive to. Consider harvesting/selling before the spell.`}),e.points.length>=2&&(e.abovePct>=3?t.push({level:"good",title:`Price is ${e.abovePct.toFixed(1)}% above your ${e.points.length}-day average`,why:`${e.local?.name||"Your market"} reports ${d(e.today)}/qtl today vs an average of ${d(Math.round(e.avg))}. Good levels to lock in.`}):e.abovePct<=-3&&t.push({level:"medium",title:`Price is ${Math.abs(e.abovePct).toFixed(1)}% below your ${e.points.length}-day average`,why:`Today's ${d(e.today)}/qtl is below the ${d(Math.round(e.avg))} average${e.storable?" \u2014 and this crop stores, so waiting is possible":" \u2014 but this crop does not keep long"}.`})),e.best&&e.spreadNet>0&&t.push({level:"good",title:`${e.best.name} pays ${d(e.spreadNet)}/qtl more than your nearest market`,why:`${d(e.best.price)}/qtl vs ${d(e.nearest.price)} \u2014 after ${d(e.best.transport)}/qtl transport (${e.best.distanceKm} km). \u2248 ${d(e.best.earnings)} on ${e.qty} quintals.`}),a.source==="LIVE"?t.push({level:"info",title:"Prices are LIVE from AGMARKNET (Govt of India)",why:`Government-reported figures${a.govDate?`, arrival date ${a.govDate}`:""}, fetched from data.gov.in.`}):a.source==="LAST KNOWN"?t.push({level:"medium",title:"Using the last government price this device saw",why:`The AGMARKNET feed was unreachable just now${a.govDate?` \u2014 showing ${a.govDate}`:""}. Verify before a large sale.`}):t.push({level:"info",title:"Showing prototype (DEMO) prices",why:`${(a.error||"The government feed is not connected right now").toString().slice(0,160)} \u2014 the app switches to LIVE automatically when the feed is reachable.`}),e.storable&&e.storageCost&&t.push({level:"info",title:`Storage costs about ${d(e.storageCost)}/qtl for ${e.storageWeeks} week${e.storageWeeks>1?"s":""}`,why:`At ${d(e.signals.storagePerQtlWeek)}/qtl/week. Holding only pays if the price rises more than that.`}),t.push({level:"info",title:"Mandi price feeds skip Sundays & government holidays",why:"On those days the app keeps the last reported figure and shows its date, so you always know how fresh a price is."}),t}function V(){let t=document.getElementById("view-alerts");if(!t)return;let e=Ta(),a={high:0,medium:1,good:2,info:3};e.sort((o,n)=>a[o.level]-a[n.level]);let s=o=>({high:'<span class="chip red">ACT NOW</span>',medium:'<span class="chip demo">WATCH</span>',good:'<span class="chip live">GOOD</span>',info:'<span class="chip">INFO</span>'})[o];t.innerHTML=`
+    <h2>Alerts</h2>
+    <p class="sub">Everything KrishiMitra is watching for you \u2014 each one says <b>why</b> it fired. Rules-based, no black box.</p>
+    <div class="alertlist">
+      ${e.map(o=>`
+        <div class="alert ${o.level}">
+          ${s(o.level)}
+          <div><b>${o.title}</b><div class="dim" style="margin-top:3px">${o.why}</div></div>
+        </div>`).join("")}
+    </div>
+    <div class="sourcenote">Alerts are generated on this device from the government price feed, live weather and your own farm
+    details. Nothing is sent anywhere.</div>`}function Da(){return!!(De.apiKey&&!De.apiKey.startsWith("PASTE"))}var Rt={profile:{village:"Duliajan",lat:27.3667,lng:95.3167,acres:2,soil:"Loamy",irrigation:"Rain-fed"},season:{crop:"paddy",variety:"Common",stage:"maturity",quantityQtl:27.6,sowingDate:new Date(Date.now()-118*864e5).toISOString().slice(0,10)}};async function Aa(){lt(de),qt(de.referenceMandi),Bt(de.personaName),i.demo=!Da()||new URLSearchParams(location.search).get("demo")==="1",await at(),Ze(),ae(),se(),Te(),re(),bt(),_(),V(),q();let t={guidance:re,sell:_,alerts:V,sales:q};if(document.querySelectorAll(".navbtn").forEach(e=>e.addEventListener("click",()=>{D(e.dataset.view),t[e.dataset.view]?.()})),document.getElementById("logoutBtn").onclick=()=>be(),i.demo){i.user={uid:"demo",email:"offline demo"};let e=a=>JSON.parse(localStorage.getItem("km_demo_"+a)||"null");i.profile=e("profile")||Rt.profile,i.season=e("season")||Rt.season,Lt(!0),je(!0),ve("Demo mode"),ge(),ae(),se(),await _e(),_(),V(),q(),D("sell");return}et(async e=>{if(!e){Re(),D("auth");return}ve(e.email),ge(),i.profile=await(await Promise.resolve().then(()=>(N(),te))).loadProfile(),i.season=await(await Promise.resolve().then(()=>(N(),te))).loadSeason(),ae(),se(),await _e(),_(),V(),q(),D(i.profile?"sell":"profile")})}async function _e(){if(i.profile)try{i.weather=await it(i.profile.lat,i.profile.lng)}catch(t){i.weather=null,console.warn("Weather unavailable:",t.message)}try{await vt()}catch(t){console.warn("Markets unavailable:",t.message)}yt(),Ca(),Pa(),Te(),_(),V(),q(),document.getElementById("view-guidance").classList.contains("active")&&re()}function Pa(){let t=document.getElementById("view-dashboard"),e=!!i.profile,a=i.markets?.[0],s=i.markets.length&&i.weather?J():null;t.innerHTML=`
+    <h2>Dashboard</h2>
+    <p class="sub">${e?`Your farm at a glance \u2014 ${i.profile.village}.`:"Start by setting up your farm profile."}</p>
+
+    ${xt()}
+
+    <div class="grid">
+      <div class="card">
+        <b style="color:var(--green)">This season</b>
+        <div style="margin-top:8px">${st()}</div>
+        <button class="btn small" style="margin-top:10px" onclick="document.querySelector('[data-view=season]').click()">Update crop</button>
+      </div>
+
+      <div class="card">
+        <b style="color:var(--green)">Weather now</b>
+        <div id="dashWeather" style="margin-top:8px">
+          ${rt()}
+        </div>
+      </div>
+
+      <div class="card">
+        <b style="color:var(--green)">Best market today</b>
+        <div style="margin-top:8px">
+          ${a?`<div class="stat">${"\u20B9"+a.netPerQtl.toLocaleString("en-IN")}<span class="statlabel"> /q net</span></div>
+               <p class="statlabel">${a.name} \xB7 ${a.distanceKm} km \xB7 \u2248 \u20B9${a.earnings.toLocaleString("en-IN")} total</p>`:'<p class="empty">Markets appear once your crop is set.</p>'}
+        </div>
+        <button class="btn small" style="margin-top:10px" onclick="document.querySelector('[data-view=markets]').click()">Compare markets</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <b style="color:var(--green)">Today's signals</b>
+      <div id="dashRisks" style="margin-top:10px">${le()}</div>
+      ${s?`<button class="btn orange" style="margin-top:6px" onclick="document.querySelector('[data-view=guidance]').click()">See my guidance \u2192</button>`:""}
+    </div>
+
+    ${Tt()}
+
+    ${ht()}
+
+    ${Ge()}`,gt()}function Ca(){let t=i.priceSource||{};i.demo&&Fe(`DEMO MODE \u2014 offline, no login. Weather is LIVE (Open-Meteo). Market prices: ${C()}`);let e=document.getElementById("footnote");e&&(e.innerHTML="KrishiMitra \xB7 Student innovation prototype \xB7 Weather: LIVE (Open-Meteo) \xB7 Market prices: "+C())}document.addEventListener("km:data-changed",()=>{_e()});"serviceWorker"in navigator&&window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").then(()=>console.log("Service worker ready \u2014 app works offline")).catch(t=>console.warn("SW registration failed:",t.message))});var ue=null;window.addEventListener("beforeinstallprompt",t=>{t.preventDefault(),ue=t;let e=document.getElementById("installBtn");e.style.display="inline-block",e.onclick=async()=>{e.style.display="none",ue.prompt(),await ue.userChoice,ue=null}});window.addEventListener("appinstalled",()=>y("KrishiMitra installed to your home screen \u2713"));window.kmFocusSellForm=_t;Aa();})();
+
+</script>
+
+<script>
+/* Installable app (PWA): registers the service worker when served over http(s),
+   so the installed app works offline. Skipped for file:// (the demo laptop). */
+if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>

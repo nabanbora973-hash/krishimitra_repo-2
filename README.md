@@ -10,7 +10,7 @@ Built as a **Progressive Web App** — installable on Android/iOS, works offline
 <p align="left">
   <a href="https://animated-croissant-38c5fc.netlify.app"><b>▶ Live demo</b></a> ·
   <a href="#-how-the-decision-engine-works">Decision engine</a> ·
-  <a href="#-testing">158 tests</a> ·
+  <a href="#-testing">Tests</a> ·
   <a href="#-honest-limitations">Limitations</a>
 </p>
 
@@ -152,28 +152,42 @@ never ship to the client, and browser CORS to government servers is unreliable. 
 
 ## 🧪 Testing
 
-**158 automated checks across 7 suites.** Not decoration — these caught real regressions.
+**95 checks run on every `npm test`** — not decoration. They caught real regressions during the build.
 
 | Suite | Checks | What it proves |
 |---|---|---|
-| `smoke.cjs` | 36 | Boots the real app in jsdom; every screen the demo shows renders with the right numbers |
-| `site_check.py` | 29 | Served build: markup, assets, routing, content |
-| `proxy_test.cjs` | 22 | Netlify Function contract: success shape, 400 on unknown crop, honest 502 |
-| `pwa_test.cjs` | 21 | Manifest fields, icon sizes, SW registration, cache strategy |
-| `standalone_check.cjs` | 20 | Single-file build is genuinely self-contained |
-| `live_feed_test.mjs` | 15 | AGMARKNET mapping: dates, prices, districts |
-| `nojs_test.cjs` | 15 | No-JavaScript snapshots render (WhatsApp/iOS in-app browsers) |
+| `smoke.cjs` | **36** | Boots the real app in jsdom; every screen renders with the exact numbers the demo shows |
+| `proxy_test.cjs` | **22** | Function contract: success shape, 400 on unknown crop, honest 502, key never leaks |
+| `pwa_test.cjs` | **21** | Manifest fields, icon sizes, SW registration, cache strategy |
+| `standalone_check.cjs` | **16** | Single-file build is genuinely self-contained and boots clean |
 
 ```bash
 npm install
-npm test              # smoke + standalone + proxy + pwa
-python3 tests/site_check.py      # needs `python3 tools/serve_local.py` running
+npm test
 ```
 
-The single-file build is ~16 MB because it embeds a demo video as base64 — that is why it lives in
-**Releases**, not in this repo.
+```
+22/22 checks passed   proxy
+21/21 checks passed   pwa
+36/36 checks passed   smoke
+16/16 checks passed   standalone
+```
 
----
+Three further suites (`site_check.py`, `live_feed_test.mjs`, `nojs_test.cjs` — 59 more checks)
+exercise the served site, the AGMARKNET row mapping and the no-JavaScript snapshots. They need a
+running server or a built artifact, so they run in CI rather than on a fresh clone.
+
+```bash
+python3 tools/serve_local.py     # then, in another shell:
+python3 tests/site_check.py
+```
+
+### Why jsdom and not a browser
+
+The interesting bugs were not visual — they were *state* bugs: a stale price series, a verdict that
+flipped when the weather call failed, a demo dataset that silently rendered as live. jsdom boots the
+real bundle in ~2 seconds and lets the tests assert on rendered text. Fast enough to run on every
+save.
 
 ## 🚀 Run it
 

@@ -33,8 +33,30 @@ const vc = new VirtualConsole();
 vc.on('jsdomError', e => { if (!/Not implemented|Could not parse CSS|fetch/i.test(e.message)) errors.push(e.message); });
 vc.on('error', (...a) => errors.push('console.error: ' + a.join(' ')));
 
-const dom = new JSDOM(html, { url: 'file://' + APP, runScripts: 'dangerously', pretendToBeVisual: true, virtualConsole: vc });
+const dom = new JSDOM(html, {
+  url: 'file://' + APP,
+  runScripts: 'dangerously',
+  pretendToBeVisual: true,
+  virtualConsole: vc,
+  beforeParse(win) {
+    // jsdom throws on localStorage for file:// URLs — the app only needs a
+    // key/value store, so a memory shim is enough for a smoke test.
+    const mem = new Map();
+    Object.defineProperty(win, 'localStorage', {
+      configurable: true,
+      value: {
+        getItem: k => (mem.has(k) ? mem.get(k) : null),
+        setItem: (k, v) => mem.set(k, String(v)),
+        removeItem: k => mem.delete(k),
+        clear: () => mem.clear(),
+        key: i => [...mem.keys()][i] ?? null,
+        get length() { return mem.size; },
+      },
+    });
+  },
+});
 const w = dom.window;
+process.on('unhandledRejection', () => {});   // offline build: network calls reject
 let played = false;
 w.HTMLMediaElement.prototype.play = function(){ played = true; };
 w.HTMLMediaElement.prototype.pause = function(){};

@@ -7,8 +7,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "python3 tools/serve_local.py",
-    "build": "python3 tools/build_standalone.py",
-    "test": "node tests/proxy_test.cjs && node tests/pwa_test.cjs && node tests/smoke.cjs && node tests/standalone_check.cjs",
+    "build": "python3 tools/build_single_file.py",
+    "test": "npm run test:proxy && npm run test:pwa && npm run test:smoke && npm run test:standalone",
     "test:proxy": "node tests/proxy_test.cjs",
     "test:pwa": "node tests/pwa_test.cjs",
     "test:smoke": "node tests/smoke.cjs",
@@ -17,21 +17,12 @@
     "test:site": "python3 tests/site_check.py"
   },
   "devDependencies": {
+    "esbuild": "^0.21.0",
     "jsdom": "^24.0.0"
   },
-  "engines": {
-    "node": ">=18"
-  },
+  "engines": { "node": ">=18" },
   "keywords": [
-    "agriculture",
-    "agmarknet",
-    "pwa",
-    "offline-first",
-    "decision-support",
-    "vanilla-js",
-    "service-worker"
-  ],
-  "dependencies": {
-    "esbuild": "^0.28.2"
-  }
+    "agriculture", "agmarknet", "pwa", "offline-first",
+    "decision-support", "vanilla-js", "service-worker"
+  ]
 }

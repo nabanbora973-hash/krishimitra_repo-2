@@ -1,0 +1,8 @@
+# KrishiMitra — public app
+User-agent: *
+Allow: /
+
+# ?demo=1 shows sample prices held on the device, not mandi quotes.
+Disallow: /*?demo=1
+
+Sitemap: https://raspy-dust-3258.nabanbora973.workers.dev/sitemap.xml

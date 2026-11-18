@@ -1,17 +1,36 @@
 {
-  "name": "KrishiMitra — Know Your Market. Choose Your Moment.",
+  "name": "KrishiMitra — Aaj ka Mandi Bhav",
   "short_name": "KrishiMitra",
-  "description": "Farm decision support: mandi prices (AGMARKNET, Govt of India), live weather and harvest timing in one clear call.",
-  "start_url": "/",
+  "description": "Aaj ka mandi bhav (AGMARKNET sarkari rate), sell decision, transport kharcha ke baad net, aur mausam — Assam ka kisan app.",
+  "start_url": "/#sell",
   "scope": "/",
   "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "any",
   "background_color": "#FCFEFC",
   "theme_color": "#0F5132",
   "lang": "en-IN",
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

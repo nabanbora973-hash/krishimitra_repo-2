@@ -5,13 +5,17 @@ import { liveBadge, clockStr, timeAgo } from "./ui.js";
 
 const CACHE_KEY = 'km_weather_cache';
 
-export async function fetchWeather(lat, lng){
+export async function fetchWeather(lat, lng, timeoutMs = 8000){
   const url = "https://api.open-meteo.com/v1/forecast"
     + `?latitude=${lat}&longitude=${lng}`
     + "&current=temperature_2m,relative_humidity_2m,precipitation,weather_code"
     + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max"
     + "&timezone=auto&forecast_days=7";
-  const r = await fetch(url);
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  let r;
+  try { r = await fetch(url, { signal: ctrl.signal }); }
+  finally { clearTimeout(timer); }
   if (!r.ok) throw new Error('Weather service unavailable (' + r.status + ')');
   const data = await r.json();
   const payload = { fetchedAt: Date.now(), data };

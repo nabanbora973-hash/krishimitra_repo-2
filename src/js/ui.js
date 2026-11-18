@@ -1,15 +1,96 @@
 // UI helpers: router, badges, toast, formatting, states. No imports.
+const IS_TEST = typeof navigator !== 'undefined' && /jsdom/i.test(navigator.userAgent || '');
+// Motion is decoration: when the OS asks for less of it, none of it is added.
+const REDUCED_MOTION = typeof matchMedia === 'function'
+  && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Which tab is on screen. Kept module-level so the back button can restore it.
+let CURRENT = 'sell';
+
 export function show(viewId){
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const prev = CURRENT;
+  CURRENT = viewId;
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active', 'km-enter'));
   const el = document.getElementById('view-' + viewId);
-  if (el) el.classList.add('active');
+  if (el){
+    el.classList.add('active');
+    // The screen arrives once. The class is removed when the animation is over,
+    // so a re-render inside the view (a fuel tap, a save) never replays it —
+    // content that keeps re-animating reads as a broken screen, not a lively one.
+    if (!REDUCED_MOTION){
+      el.classList.add('km-enter');
+      setTimeout(() => el.classList.remove('km-enter'), 420);
+    }
+  }
   document.querySelectorAll('.navbtn').forEach(b =>
     b.classList.toggle('on', b.dataset.view === viewId));
+  // The magic-notch pill follows the tab. Decoration only — never a dependency.
+  try { window.kmNavGlide?.(viewId); } catch {}
+  // The bottom bar needs to know a view changed (it lights "More" for the
+  // sections that live behind it). Plain event: no module may block on it.
+  try { window.dispatchEvent(new CustomEvent('km:view-changed', { detail: viewId })); } catch {}
   window.scrollTo({ top: 0 });
+
+  // Inside the installed Android app there is no browser back button in the
+  // chrome — there is the system one. Without a history entry, pressing it
+  // closes the app from any tab, which feels broken. Push one entry per tab.
+  try {
+    if (viewId !== prev && !IS_TEST) {
+      history.pushState({ kmView: viewId }, '', '#' + viewId);
+    }
+  } catch {}
 }
 
+// Tabs are a stack, not a set: back goes to the previous tab, and back from the
+// first tab leaves the app (the expected Android behaviour).
+export function initBackNavigation(onLeave){
+  if (typeof window === 'undefined' || IS_TEST) return;
+  try {
+    if (!history.state || !history.state.kmView) history.replaceState({ kmView: CURRENT }, '', '#' + CURRENT);
+  } catch {}
+  window.addEventListener('popstate', e => {
+    const target = (e.state && e.state.kmView) || null;
+    if (!target){ if (typeof onLeave === 'function') onLeave(); return; }
+    CURRENT = target;
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + target)?.classList.add('active');
+    document.querySelectorAll('.navbtn').forEach(b => b.classList.toggle('on', b.dataset.view === target));
+    try { window.kmNavGlide?.(target); } catch {}
+  });
+}
+
+export const currentView = () => CURRENT;
+
 export function hideApp(){ document.getElementById('app').style.display = 'none'; }
-export function showApp(){ document.getElementById('app').style.display = 'block'; }
+// flex, not block: #app is a column so a short screen still keeps the footer at
+// the bottom instead of leaving it stranded halfway up the page.
+// The splash is a promise: "the app is coming". Once the app is actually on
+// screen that promise is kept, so the parda must come down.
+//
+// It used to be CSS-only — `animation: kmSplashAuto .5s ease 2.6s forwards` —
+// which held the logo over the app for 3.1 s on EVERY open, including the ones
+// that are ready in 250 ms. Measured on a 390x844 viewport:
+//   domcontentloaded 155 ms · first heading 247 ms · splash gone 3173 ms.
+// Two and a half seconds of a farmer staring at a logo while his price is
+// already rendered underneath it.
+//
+// So: lift it when the screen is real. A 650 ms floor keeps the mark readable
+// instead of a flicker; the CSS timer stays as the fallback if JS never runs.
+let _splashLifted = false;
+export function liftSplash(){
+  if (_splashLifted) return;
+  _splashLifted = true;
+  const sp = document.getElementById('splash');
+  if (!sp) return;
+  const lift = () => { sp.classList.add('done'); setTimeout(() => sp.remove(), 500); };
+  const held = Math.max(0, 650 - (typeof performance !== 'undefined' ? performance.now() : 0));
+  setTimeout(lift, held);
+}
+
+export function showApp(){
+  document.getElementById('app').style.display = 'flex';
+  liftSplash();
+}
 export function setDemoBanner(on){
   document.getElementById('demobanner').style.display = on ? 'block' : 'none';
 }

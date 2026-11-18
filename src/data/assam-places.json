@@ -1,0 +1,215 @@
+{
+ "note": "Every district of Assam with its main market town. Used to place government mandi rows (which carry a district but no coordinates) and to find the nearest market to any farm.",
+ "places": [
+  {
+   "district": "Baksa",
+   "town": "Mushalpur",
+   "lat": 26.55,
+   "lng": 91.35
+  },
+  {
+   "district": "Bajali",
+   "town": "Pathsala",
+   "lat": 26.5,
+   "lng": 91.18
+  },
+  {
+   "district": "Barpeta",
+   "town": "Barpeta",
+   "lat": 26.32,
+   "lng": 91.0
+  },
+  {
+   "district": "Biswanath",
+   "town": "Biswanath Chariali",
+   "lat": 26.73,
+   "lng": 93.15
+  },
+  {
+   "district": "Bongaigaon",
+   "town": "Bongaigaon",
+   "lat": 26.48,
+   "lng": 90.56
+  },
+  {
+   "district": "Cachar",
+   "town": "Silchar",
+   "lat": 24.83,
+   "lng": 92.78
+  },
+  {
+   "district": "Charaideo",
+   "town": "Sonari",
+   "lat": 27.05,
+   "lng": 94.9
+  },
+  {
+   "district": "Chirang",
+   "town": "Kajalgaon",
+   "lat": 26.55,
+   "lng": 90.35
+  },
+  {
+   "district": "Darrang",
+   "town": "Mangaldoi",
+   "lat": 26.44,
+   "lng": 92.03
+  },
+  {
+   "district": "Dhemaji",
+   "town": "Dhemaji",
+   "lat": 27.48,
+   "lng": 94.58
+  },
+  {
+   "district": "Dhubri",
+   "town": "Dhubri",
+   "lat": 26.02,
+   "lng": 89.97
+  },
+  {
+   "district": "Dibrugarh",
+   "town": "Dibrugarh",
+   "lat": 27.47,
+   "lng": 94.91
+  },
+  {
+   "district": "Dima Hasao",
+   "town": "Haflong",
+   "lat": 25.17,
+   "lng": 93.02
+  },
+  {
+   "district": "Goalpara",
+   "town": "Goalpara",
+   "lat": 26.17,
+   "lng": 90.62
+  },
+  {
+   "district": "Golaghat",
+   "town": "Golaghat",
+   "lat": 26.51,
+   "lng": 93.96
+  },
+  {
+   "district": "Hailakandi",
+   "town": "Hailakandi",
+   "lat": 24.68,
+   "lng": 92.56
+  },
+  {
+   "district": "Hojai",
+   "town": "Hojai",
+   "lat": 26.0,
+   "lng": 92.86
+  },
+  {
+   "district": "Jorhat",
+   "town": "Jorhat",
+   "lat": 26.75,
+   "lng": 94.2
+  },
+  {
+   "district": "Kamrup",
+   "town": "Amingaon",
+   "lat": 26.18,
+   "lng": 91.68
+  },
+  {
+   "district": "Kamrup Metropolitan",
+   "town": "Guwahati",
+   "lat": 26.14,
+   "lng": 91.74
+  },
+  {
+   "district": "Karbi Anglong",
+   "town": "Diphu",
+   "lat": 25.83,
+   "lng": 93.43
+  },
+  {
+   "district": "Karimganj",
+   "town": "Karimganj",
+   "lat": 24.87,
+   "lng": 92.36
+  },
+  {
+   "district": "Kokrajhar",
+   "town": "Kokrajhar",
+   "lat": 26.4,
+   "lng": 90.27
+  },
+  {
+   "district": "Lakhimpur",
+   "town": "North Lakhimpur",
+   "lat": 27.24,
+   "lng": 94.1
+  },
+  {
+   "district": "Majuli",
+   "town": "Garamur",
+   "lat": 26.95,
+   "lng": 94.17
+  },
+  {
+   "district": "Morigaon",
+   "town": "Morigaon",
+   "lat": 26.25,
+   "lng": 92.34
+  },
+  {
+   "district": "Nagaon",
+   "town": "Nagaon",
+   "lat": 26.35,
+   "lng": 92.68
+  },
+  {
+   "district": "Nalbari",
+   "town": "Nalbari",
+   "lat": 26.44,
+   "lng": 91.44
+  },
+  {
+   "district": "Sivasagar",
+   "town": "Sivasagar",
+   "lat": 26.98,
+   "lng": 94.63
+  },
+  {
+   "district": "Sonitpur",
+   "town": "Tezpur",
+   "lat": 26.65,
+   "lng": 92.79
+  },
+  {
+   "district": "South Salmara-Mankachar",
+   "town": "Mankachar",
+   "lat": 25.98,
+   "lng": 89.85
+  },
+  {
+   "district": "Tamulpur",
+   "town": "Tamulpur",
+   "lat": 26.62,
+   "lng": 91.55
+  },
+  {
+   "district": "Tinsukia",
+   "town": "Tinsukia",
+   "lat": 27.49,
+   "lng": 95.36
+  },
+  {
+   "district": "Udalguri",
+   "town": "Udalguri",
+   "lat": 26.75,
+   "lng": 92.1
+  },
+  {
+   "district": "West Karbi Anglong",
+   "town": "Hamren",
+   "lat": 25.9,
+   "lng": 92.6
+  }
+ ]
+}

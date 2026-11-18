@@ -5,10 +5,11 @@ import { state } from "./state.js";
 import { logGuidance } from "./store.js";
 import { show, toast, rupees } from "./ui.js";
 import { risksHTML } from "./risk.js";
+import { bestMarket } from "./markets.js";
 
 export function buildGuidance(){
   const byId = Object.fromEntries((state.risks || []).map(r => [r.id, r]));
-  const best = state.markets?.[0];
+  const best = bestMarket(state.markets) || state.markets?.[0];
   const actions = [];
 
   if (byId['spread'])  actions.push({ type: 'compare', title: 'Compare markets before selling',

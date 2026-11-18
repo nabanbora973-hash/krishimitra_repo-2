@@ -1,7 +1,6 @@
 // Crop knowledge table + seasonal crop setup (deck: "Seasonal Crop Setup").
 // The knowledge table is the domain intelligence the risk engine reads.
 import { state } from "./state.js";
-import { saveSeason } from "./store.js";
 import { show, toast, emptyHTML } from "./ui.js";
 
 export let CROPS = {};
@@ -88,6 +87,10 @@ export function renderSeason(){
     };
     if (!season.sowingDate) return toast('Please pick a sowing date');
     state.season = season;
+    // Loaded on demand: the crop table is needed at boot, the cloud writer is
+    // only needed when someone actually saves. Keeps the first paint free of the
+    // Firebase SDK, and keeps this module usable outside a browser.
+    const { saveSeason } = await import("./store.js");
     const res = await saveSeason(season);
     toast(res.local ? 'Season saved locally ✓' : 'Season saved ✓');
     document.dispatchEvent(new CustomEvent('km:data-changed'));

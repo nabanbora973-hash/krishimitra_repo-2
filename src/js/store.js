@@ -16,47 +16,57 @@ function localLoad(key){
 }
 
 // ---------- PROFILE ----------
+// The device copy is written FIRST and always. The cloud is the backup, not the
+// source of truth — a farmer on a bad connection must never lose a season
+// because the upload failed.
 export async function saveProfile(profile){
-  if (state.demo) { localSave('profile', profile); return { local: true }; }
+  localSave('profile', profile);
+  if (state.demo || !state.user?.uid || state.user.uid === 'demo') return { local: true };
   try {
     await setDoc(doc(db, "users", state.user.uid), { profile }, { merge: true });
-    return { local: false };
+    markSynced();
+    return { local: true, cloud: true };
   } catch (e) {
-    console.warn("Firestore write failed, saving locally:", e.message);
-    localSave('profile', profile);
-    return { local: true, error: e.message };
+    console.warn("Firestore write failed (kept on device):", e.message);
+    return { local: true, cloud: false, error: e.message };
   }
 }
 export async function loadProfile(){
-  if (state.demo) return localLoad('profile');
+  const local = localLoad('profile');
+  if (state.demo || !state.user?.uid || state.user.uid === 'demo') return local;
   try {
     const snap = await getDoc(doc(db, "users", state.user.uid));
-    return snap.exists() ? (snap.data().profile || null) : null;
+    const cloud = snap.exists() ? (snap.data().profile || null) : null;
+    // Cloud wins when it exists (new phone case), device copy otherwise.
+    if (cloud) { localSave('profile', cloud); return cloud; }
+    return local;
   } catch (e) {
-    console.warn("Firestore read failed:", e.message);
-    return localLoad('profile');
+    console.warn("Firestore read failed (using this device's copy):", e.message);
+    return local;
   }
 }
 
 // ---------- SEASON ----------
 export async function saveSeason(season){
-  if (state.demo) { localSave('season', season); return { local: true }; }
+  localSave('season', season);
+  if (state.demo || !state.user?.uid || state.user.uid === 'demo') return { local: true };
   try {
     await setDoc(doc(db, "users", state.user.uid), { currentSeason: season }, { merge: true });
-    return { local: false };
+    markSynced();
+    return { local: true, cloud: true };
   } catch (e) {
-    localSave('season', season);
-    return { local: true, error: e.message };
+    return { local: true, cloud: false, error: e.message };
   }
 }
 export async function loadSeason(){
-  if (state.demo) return localLoad('season');
+  const local = localLoad('season');
+  if (state.demo || !state.user?.uid || state.user.uid === 'demo') return local;
   try {
     const snap = await getDoc(doc(db, "users", state.user.uid));
-    return snap.exists() ? (snap.data().currentSeason || null) : null;
-  } catch (e) {
-    return localLoad('season');
-  }
+    const cloud = snap.exists() ? (snap.data().currentSeason || null) : null;
+    if (cloud) { localSave('season', cloud); return cloud; }
+    return local;
+  } catch (e) { return local; }
 }
 
 // ---------- GUIDANCE AUDIT LOG (integrity story for Q&A) ----------
@@ -77,4 +87,32 @@ export async function loadGuidanceLog(){
     const snap = await getDoc(doc(db, "users", state.user.uid));
     return localLoad('guidanceLog') || [];
   } catch (e) { return localLoad('guidanceLog') || []; }
+}
+
+
+// ---------- cloud sync bookkeeping ----------
+const SYNC_KEY = 'km_last_sync';
+function markSynced(){ try { localStorage.setItem(SYNC_KEY, String(Date.now())); } catch {} }
+export function lastSyncedAt(){
+  try { const v = localStorage.getItem(SYNC_KEY); return v ? Number(v) : null; } catch { return null; }
+}
+
+// Push whatever is on this device to the farmer's Firestore document. Used by
+// the 'Sync now' button after a spell offline.
+export async function pushAllToCloud(){
+  if (state.demo || !state.user?.uid) return { ok: false, reason: 'not signed in' };
+  const profile = localLoad('profile');
+  const season  = localLoad('season');
+  const sales   = localLoad('sales_v1');
+  try {
+    await setDoc(doc(db, "users", state.user.uid),
+      { profile: profile || null,
+        currentSeason: season || null,
+        sales: sales || null,
+        syncedAt: serverTimestamp() }, { merge: true });
+    markSynced();
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, reason: e.message };
+  }
 }

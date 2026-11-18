@@ -3,6 +3,7 @@
 import { state } from "./state.js";
 import { CROPS } from "./crops.js";
 import { renderRisksIn } from "./guidance.js";
+import { bestMarket, nearestMandi, tripGain, WORTH_GAIN_PER_QTL } from "./markets.js";
 
 export function assessRisks(){
   const { weather, season, markets } = state;
@@ -14,11 +15,12 @@ export function assessRisks(){
   const rain3 = (d.precipitation_probability_max || []).slice(0, 3).map(x => x ?? 0);
   const maxRain = rain3.length ? Math.max(...rain3) : 0;
   const maxT = Math.max(...(d.temperature_2m_max || []).slice(0, 3).map(x => x ?? -99));
-  const ranked = markets.filter(m => m.knownDistance !== false && m.netPerQtl != null);
-  const best = ranked[0];
-  const nearest = ranked.length ? ranked.reduce((a, b) => (a.distanceKm < b.distanceKm ? a : b)) : null;
-  // Same model as the deck: extra price at the far market − transport to reach it.
-  const gain = (best && nearest) ? Math.round((best.price - nearest.price) - best.transport) : 0;
+  // Same rule the market table uses: the best market among the ones worth
+  // driving to, measured against the mandi next door — not against the trader
+  // in the village, who is not a destination at all.
+  const best = bestMarket(markets);
+  const nearest = nearestMandi(markets);
+  const gain = tripGain(best, nearest);
 
   // RULE 1 — rain during a sensitive stage
   if (crop && maxRain >= 60 && crop.rainSensitiveStages.includes(season.stage)){
@@ -33,15 +35,17 @@ export function assessRisks(){
   }
 
   // RULE 3 — falling price trend
-  if (best.trend <= -4){
+  if (best && best.trend != null && best.trend <= -4){
     risks.push({ id: 'falling', severity: 'high', title: 'Prices falling recently',
       why: `${best.name} is ${best.trend.toFixed(1)}% over the recent period — waiting may cost you money.` });
   }
 
-  // RULE 4 — market spread opportunity (a positive signal, still logged)
-  if (gain >= 100){
-    risks.push({ id: 'spread', severity: 'opportunity', title: `₹${gain}/quintal available at ${best.name}`,
-      why: `${best.name} pays ₹${best.price} vs ₹${nearest.price} at ${nearest.name}, minus ₹${best.transport}/qtl transport to get there — net +₹${gain}/qtl, ≈ ₹${gain * (season.quantityQtl || 0)} on ${season.quantityQtl} quintals.` });
+  // RULE 4 — market spread opportunity. Only fires when the drive pays for
+  // itself: ₹60/qtl over the nearest mandi, and climbing with every extra km.
+  if (best && nearest && gain >= WORTH_GAIN_PER_QTL){
+    risks.push({ id: 'spread', severity: 'opportunity',
+      title: `₹${gain}/quintal more at ${best.name}`,
+      why: `${best.name} nets ₹${best.netPerQtl}/qtl after ₹${best.transport}/qtl transport (${best.distanceKm} km), against ₹${nearest.netPerQtl}/qtl at ${nearest.name}, ${nearest.distanceKm} km away. +₹${gain}/qtl, ≈ ₹${gain * (season.quantityQtl || 0)} on ${season.quantityQtl} quintals — enough to pay for the drive.` });
   }
 
   // RULE 5 — perishability clock

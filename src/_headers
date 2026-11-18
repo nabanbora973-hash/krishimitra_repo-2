@@ -1,0 +1,25 @@
+# Cloudflare Pages reads this file automatically — no dashboard setting needed.
+#
+# Why these two lines matter more than they look:
+#   sw.js is the service worker. If the browser caches it for even an hour,
+#   a phone that already installed the app keeps serving yesterday's build and
+#   no amount of redeploying reaches it. must-revalidate makes every open ask
+#   "is this still current?" — a 304 costs nothing, a stale app costs trust.
+#   index.html is the document that names the current build (v41.9). Same rule.
+#
+# Everything else (js/, css/, icons/) is left alone on purpose: those files are
+# NOT fingerprinted, so an immutable header would pin a year-old module after
+# one deploy. Default revalidation is the safe default here.
+
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+  Service-Worker-Allowed: /
+
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/robots.txt
+  Content-Type: text/plain; charset=utf-8
+
+/sitemap.xml
+  Content-Type: application/xml; charset=utf-8

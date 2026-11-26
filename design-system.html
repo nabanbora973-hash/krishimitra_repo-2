@@ -1,0 +1,77 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KrishiMitra - Design System v43</title>
+<style>:root{
+  --green-900:#0B4A2F;  --green-700:#17784A;
+  --green-400:#8FD46B;  --green-50 :#EAF6EE;
+  --gold     :#E2892B;  --gold-text:#A85800;
+  --gold-ink :#6E3F0B;  --cream    :#FFE9CF;
+  --red      :#A80E1F;  --red-50   :#FBEAEA;
+  --info     :#1552A8;  --info-50  :#DCEBFF;
+  --surface  :#FFFFFF;  --ink      :#16221C;
+  --muted    :#586A5F;  --line     :#DDEBE1;
+  --line-soft:#EDF4EF;
+
+  --t-xs:12px; --t-sm:13.5px; --t-md:15.5px; --t-lg:18px;
+  --t-xl:22px; --t-2xl:28px; --t-3xl:40px;
+  --lh-tight:1.15; --lh-body:1.55;
+
+  --w-reg:400; --w-med:600; --w-bold:800;
+
+  --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px;
+  --s-5:20px; --s-6:24px; --s-7:32px; --s-8:48px;
+
+  --r-sm:10px; --r-md:14px; --r-lg:18px; --r-pill:999px;
+
+  --sh-1:0 1px 2px rgba(11,74,47,.06);
+  --sh-2:0 2px 6px rgba(11,74,47,.06), 0 10px 26px -14px rgba(11,74,47,.20);
+  --sh-3:0 4px 10px rgba(11,74,47,.07), 0 22px 48px -22px rgba(11,74,47,.30);
+  --ring:0 0 0 3px rgba(23,120,74,.20);
+
+  --ease:cubic-bezier(.2,.8,.2,1);
+  --dur-fast:.16s; --dur:.28s; --dur-slow:.5s;
+}
+</style>
+<style>
+ body{font-family:'Segoe UI',system-ui,sans-serif;background:#F7FBF8;color:var(--ink);margin:0;padding:28px 20px 80px}
+ .wrap{max-width:880px;margin:0 auto}
+ h1{font-size:var(--t-2xl);margin:0 0 6px;letter-spacing:-.02em;color:var(--green-900)}
+ .lead{color:var(--muted);font-size:var(--t-md);margin:0 0 26px}
+ h2{font-size:var(--t-lg);margin:34px 0 14px;color:var(--green-900);padding-bottom:8px;border-bottom:2px solid var(--line)}
+ .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+ .sw{display:flex;align-items:center;gap:10px;background:#fff;padding:9px;border-radius:var(--r-md);box-shadow:var(--sh-1)}
+ .chipc{width:38px;height:38px;border-radius:var(--r-sm);border:1px solid var(--line);flex:0 0 auto}
+ .sw b{display:block;font-size:var(--t-xs);font-weight:var(--w-med);color:var(--green-900)}
+ .sw span{display:block;font-size:11px;color:var(--muted)}
+ .trow{display:flex;align-items:baseline;gap:14px;background:#fff;padding:12px 14px;border-radius:var(--r-md);margin-bottom:8px;box-shadow:var(--sh-1);flex-wrap:wrap}
+ .trow b{font-size:var(--t-xs);color:var(--green-700);width:78px;flex:0 0 auto}
+ .meta{font-size:var(--t-xs);color:var(--muted)}
+ .rrow,.sprow{display:flex;align-items:center;gap:12px;margin-bottom:9px}
+ .rbox{width:64px;height:40px;border:2px solid var(--green-400);flex:0 0 auto}
+ .rrow b,.sprow b{font-size:var(--t-xs);color:var(--green-700);width:70px}
+ .spbar{height:12px;background:var(--green-400);border-radius:3px;flex:0 0 auto}
+ .demo{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px}
+ .card{background:#fff;padding:16px;border-radius:var(--r-lg);box-shadow:var(--sh-2);flex:1 1 220px;min-width:200px}
+ .card b{font-size:var(--t-lg);display:block;margin-top:10px;margin-bottom:4px;color:var(--green-900)}
+ .card p{font-size:var(--t-sm);color:var(--muted);margin:6px 0 12px;line-height:var(--lh-body)}
+ .num{font-size:var(--t-3xl);font-weight:var(--w-bold);color:var(--green-900);line-height:1}
+ .btn{border:0;border-radius:var(--r-md);padding:12px 20px;font-size:var(--t-md);font-weight:var(--w-med);cursor:pointer;background:var(--green-900);color:#fff}
+ .btn.gold{background:var(--gold);color:#fff}
+ .pill{display:inline-block;background:var(--green-400);color:var(--green-900);font-size:var(--t-xs);font-weight:var(--w-bold);padding:4px 11px;border-radius:var(--r-pill)}
+</style></head><body><div class="wrap">
+<h1>KrishiMitra &mdash; design system</h1>
+<p class="lead">v43 &middot; 142 colours &rarr; 17 &middot; 34 font-sizes &rarr; 7 &middot; 30 spacing &rarr; 8 &middot; 24 radius &rarr; 4 &middot; 31 shadows &rarr; 3</p>
+<h2>Colour</h2><div class="grid"><div class="sw"><div class="chipc" style="background:var(--green-900)"></div><div><b>--green-900</b><span>#0B4A2F &middot; Brand / heading</span></div></div><div class="sw"><div class="chipc" style="background:var(--green-700)"></div><div><b>--green-700</b><span>#17784A &middot; Link / active</span></div></div><div class="sw"><div class="chipc" style="background:var(--green-400)"></div><div><b>--green-400</b><span>#8FD46B &middot; LIVE / positive</span></div></div><div class="sw"><div class="chipc" style="background:var(--green-50)"></div><div><b>--green-50</b><span>#EAF6EE &middot; Panel tint</span></div></div><div class="sw"><div class="chipc" style="background:var(--gold)"></div><div><b>--gold</b><span>#E2892B &middot; CTA</span></div></div><div class="sw"><div class="chipc" style="background:var(--gold-text)"></div><div><b>--gold-text</b><span>#A85800 &middot; Gold TEXT</span></div></div><div class="sw"><div class="chipc" style="background:var(--gold-ink)"></div><div><b>--gold-ink</b><span>#6E3F0B &middot; On cream</span></div></div><div class="sw"><div class="chipc" style="background:var(--cream)"></div><div><b>--cream</b><span>#FFE9CF &middot; Estimate surface</span></div></div><div class="sw"><div class="chipc" style="background:var(--red)"></div><div><b>--red</b><span>#A80E1F &middot; Negative / error</span></div></div><div class="sw"><div class="chipc" style="background:var(--red-50)"></div><div><b>--red-50</b><span>#FBEAEA &middot; Error surface</span></div></div><div class="sw"><div class="chipc" style="background:var(--info)"></div><div><b>--info</b><span>#1552A8 &middot; Info</span></div></div><div class="sw"><div class="chipc" style="background:var(--info-50)"></div><div><b>--info-50</b><span>#DCEBFF &middot; Info surface</span></div></div><div class="sw"><div class="chipc" style="background:var(--surface)"></div><div><b>--surface</b><span>#FFFFFF &middot; Card</span></div></div><div class="sw"><div class="chipc" style="background:var(--ink)"></div><div><b>--ink</b><span>#16221C &middot; Body text</span></div></div><div class="sw"><div class="chipc" style="background:var(--muted)"></div><div><b>--muted</b><span>#586A5F &middot; Secondary</span></div></div><div class="sw"><div class="chipc" style="background:var(--line)"></div><div><b>--line</b><span>#DDEBE1 &middot; Border</span></div></div><div class="sw"><div class="chipc" style="background:var(--line-soft)"></div><div><b>--line-soft</b><span>#EDF4EF &middot; Soft border</span></div></div></div>
+<h2>Type &mdash; 7 steps</h2><div class="trow"><span style="font-size:var(--t-xs)">Aa &#8377;3,000</span><b>--t-xs</b><span class="meta">12px &middot; meta / label</span></div><div class="trow"><span style="font-size:var(--t-sm)">Aa &#8377;3,000</span><b>--t-sm</b><span class="meta">13.5px &middot; secondary body</span></div><div class="trow"><span style="font-size:var(--t-md)">Aa &#8377;3,000</span><b>--t-md</b><span class="meta">15.5px &middot; BODY</span></div><div class="trow"><span style="font-size:var(--t-lg)">Aa &#8377;3,000</span><b>--t-lg</b><span class="meta">18px &middot; card title</span></div><div class="trow"><span style="font-size:var(--t-xl)">Aa &#8377;3,000</span><b>--t-xl</b><span class="meta">22px &middot; section head</span></div><div class="trow"><span style="font-size:var(--t-2xl)">Aa &#8377;3,000</span><b>--t-2xl</b><span class="meta">28px &middot; page head</span></div><div class="trow"><span style="font-size:var(--t-3xl)">Aa &#8377;3,000</span><b>--t-3xl</b><span class="meta">40px &middot; hero number</span></div>
+<h2>Radius &mdash; 4</h2><div class="rrow"><div class="rbox" style="border-radius:var(--r-sm)"></div><b>--r-sm</b><span class="meta">10px &middot; input / chip</span></div><div class="rrow"><div class="rbox" style="border-radius:var(--r-md)"></div><b>--r-md</b><span class="meta">14px &middot; button</span></div><div class="rrow"><div class="rbox" style="border-radius:var(--r-lg)"></div><b>--r-lg</b><span class="meta">18px &middot; card</span></div><div class="rrow"><div class="rbox" style="border-radius:var(--r-pill)"></div><b>--r-pill</b><span class="meta">999px &middot; pill</span></div>
+<h2>Shadow &mdash; 3</h2><div class="rrow"><div class="rbox" style="border-radius:var(--r-lg);box-shadow:var(--sh-1);background:#fff"></div><b>--sh-1</b><span class="meta">0 1px 2px rgba(11,74,47,.06) &middot; resting</span></div><div class="rrow"><div class="rbox" style="border-radius:var(--r-lg);box-shadow:var(--sh-2);background:#fff"></div><b>--sh-2</b><span class="meta">0 2px 6px rgba(11,74,47,.06), 0 10px 26px -14px rgba(11,74,47,.20) &middot; card</span></div><div class="rrow"><div class="rbox" style="border-radius:var(--r-lg);box-shadow:var(--sh-3);background:#fff"></div><b>--sh-3</b><span class="meta">0 4px 10px rgba(11,74,47,.07), 0 22px 48px -22px rgba(11,74,47,.30) &middot; lifted</span></div>
+<h2>Spacing &mdash; 8 (4px grid)</h2><div class="sprow"><div class="spbar" style="width:16px"></div><b>--s-1</b><span class="meta">4px</span></div><div class="sprow"><div class="spbar" style="width:32px"></div><b>--s-2</b><span class="meta">8px</span></div><div class="sprow"><div class="spbar" style="width:48px"></div><b>--s-3</b><span class="meta">12px</span></div><div class="sprow"><div class="spbar" style="width:64px"></div><b>--s-4</b><span class="meta">16px</span></div><div class="sprow"><div class="spbar" style="width:80px"></div><b>--s-5</b><span class="meta">20px</span></div><div class="sprow"><div class="spbar" style="width:96px"></div><b>--s-6</b><span class="meta">24px</span></div><div class="sprow"><div class="spbar" style="width:112px"></div><b>--s-7</b><span class="meta">28px</span></div><div class="sprow"><div class="spbar" style="width:128px"></div><b>--s-8</b><span class="meta">32px</span></div>
+<h2>Components</h2>
+<div class="demo">
+ <div class="card"><span class="pill">LIVE</span><b>Paddy &middot; Sontoli APMC</b>
+  <div class="num">&#8377;1,775</div><p>&minus; &#8377;666 MSP se neeche</p>
+  <button class="btn">Sell decision</button></div>
+ <div class="card"><span class="pill" style="background:var(--cream);color:var(--gold-ink)">ESTIMATE</span>
+  <b>Tomato &middot; Tinsukia</b><div class="num" style="color:var(--green-700)">&#8377;3,000</div>
+  <p>13 mandi &middot; 14 tareekh</p><button class="btn gold">Dekho</button></div>
+</div></div></body></html>

@@ -1,0 +1,36 @@
+{
+  "name": "KrishiMitra \u2014 Aaj ka Mandi Bhav",
+  "short_name": "KrishiMitra",
+  "description": "Aaj ka mandi bhav (AGMARKNET sarkari rate), sell decision, transport kharcha ke baad net, aur mausam \u2014 Assam ka kisan app.",
+  "start_url": "/#sell",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "any",
+  "background_color": "#f4f6f0",
+  "theme_color": "#103e32",
+  "lang": "en-IN",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

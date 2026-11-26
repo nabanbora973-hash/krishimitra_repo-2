@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KrishiMitra — Privacy Policy</title>
+<meta name="theme-color" content="#0F5132">
+<style>
+  :root{--green:#0F5132;--ink:#14251B;--mute:#5C7566;--bg:#F7FBF7}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  header{background:var(--green);color:#fff;padding:34px 20px}
+  .wrap{max-width:760px;margin:0 auto}
+  h1{margin:0;font-size:28px}
+  header p{margin:8px 0 0;color:#B9E3C9;font-size:14px}
+  main{max-width:760px;margin:0 auto;padding:8px 20px 60px}
+  h2{font-size:19px;margin:32px 0 8px;color:var(--green)}
+  h3{font-size:16px;margin:20px 0 4px}
+  ul{padding-left:22px} li{margin:6px 0}
+  .card{background:#fff;border:1px solid #DDEAE0;border-radius:14px;padding:16px 18px;margin:16px 0}
+  .key{background:#E8F6EC;border-left:4px solid var(--green);padding:12px 16px;border-radius:8px;margin:16px 0}
+  code{background:#EDF4EE;padding:1px 6px;border-radius:5px;font-size:14px}
+  footer{color:var(--mute);font-size:13px;margin-top:40px;border-top:1px solid #DDEAE0;padding-top:16px}
+  a{color:var(--green)}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1>Privacy Policy</h1>
+  <p>KrishiMitra · last updated 1 November 2026</p>
+</div></header>
+<main>
+
+<div class="key">
+  <b>The short version:</b> KrishiMitra works without an account. Your farm details, crop,
+  season and sale records are stored <b>on your phone</b>. We do not sell data and we do
+  not run advertising or tracking SDKs.
+</div>
+
+<h2>1. Who we are</h2>
+<p>KrishiMitra is an agricultural decision-support app for farmers in Assam, India. It shows
+daily mandi prices, live weather and a sell/hold recommendation. Contact:
+<b id="contact">nabamborah@gmail.com</b>.</p>
+
+<h2>2. What the app stores on your device</h2>
+<ul>
+  <li>Your farm profile — village/town, district, area, crop and expected harvest.</li>
+  <li>Your season details and any sale records you enter.</li>
+  <li>The last price list the app successfully downloaded, so it still works offline.</li>
+</ul>
+<p>This information stays in your browser/app storage on the device. Uninstalling the app,
+or using <i>Clear data</i> in Android settings, removes it.</p>
+
+<h2>3. What leaves your device</h2>
+<div class="card">
+  <h3>Market prices</h3>
+  <p>Requests go to our own Cloudflare Worker, which forwards them to the Government of
+  India open-data platform (data.gov.in / AGMARKNET). The request contains only a crop name
+  and the state — <b>no personal information</b>.</p>
+
+  <h3>Weather</h3>
+  <p>Weather is fetched from Open-Meteo using the coordinates of your farm (or of the town
+  you typed). No account or identifier is attached. See
+  <a href="https://open-meteo.com/en/terms" target="_blank" rel="noopener">Open-Meteo terms</a>.</p>
+
+  <h3>If you choose to sign in</h3>
+  <p>Signing in is optional. If you use a Google account or a phone number, authentication is
+  handled by Google Firebase. We store only your account identifier and the profile you enter,
+  so your data can follow you to a new phone. You can use the app entirely without this.</p>
+</div>
+
+<h2>4. What we never do</h2>
+<ul>
+  <li>No advertising, no ad networks, no third-party tracking SDKs.</li>
+  <li>We do not sell or rent your data.</li>
+  <li>We do not read your contacts, photos, SMS or call logs.</li>
+  <li>We do not share your farm details with traders or mandis.</li>
+</ul>
+
+<h2>5. Permissions the app asks for</h2>
+<ul>
+  <li><b>Location (optional)</b> — only when you tap “Use my location”, to measure distance to
+  mandis and fetch weather for your field. Denying it changes nothing else: you can type your
+  village instead.</li>
+  <li><b>Notifications (optional)</b> — for price alerts you set yourself.</li>
+  <li><b>Internet</b> — to fetch prices and weather.</li>
+</ul>
+
+<h2>6. Data honesty</h2>
+<p>Prices are labelled <b>LIVE</b> only when they come from the government feed. If the feed
+is unreachable the app shows <b>LAST KNOWN</b> (a saved earlier figure, with its date) or
+<b>DEMO</b> (an illustrative prototype dataset). It never presents an invented number as a
+live government price.</p>
+
+<h2>7. Children</h2>
+<p>The app is not directed at children under 13 and we do not knowingly collect their data.</p>
+
+<h2>8. Your choices</h2>
+<ul>
+  <li>Use the app without signing in.</li>
+  <li>Deny location and type your village instead.</li>
+  <li>Delete everything with <i>Android Settings → Apps → KrishiMitra → Storage → Clear data</i>.</li>
+  <li>Ask us to delete a cloud account and its data by writing to the contact address above;
+  we will do it within 30 days.</li>
+</ul>
+
+<h2>9. Changes</h2>
+<p>If this policy changes, the new version appears at this page with a new date. Material
+changes will be noted in the app.</p>
+
+<footer>
+  KrishiMitra · Assam, India · <span id="contact2">nabamborah@gmail.com</span><br>
+  Public source: data.gov.in (AGMARKNET, Ministry of Agriculture &amp; Farmers Welfare) for
+  prices; Open-Meteo for weather.
+</footer>
+
+</main>
+</body>
+</html>

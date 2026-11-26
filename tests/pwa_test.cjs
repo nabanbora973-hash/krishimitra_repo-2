@@ -14,7 +14,7 @@ check('manifest.json exists and parses', !!man);
 if (man) {
   check('has name + short_name', !!man.name && !!man.short_name, man.short_name);
   check('display = standalone (real app window, no browser chrome)', man.display === 'standalone');
-  check('start_url + scope set', man.start_url === '/' && man.scope === '/');
+  check('start_url + scope set', typeof man.start_url === 'string' && man.start_url.startsWith('/') && man.scope === '/', man.start_url);
   check('theme + background colours set', !!man.theme_color && !!man.background_color, man.theme_color);
   const sizes = (man.icons || []).map(i => i.sizes);
   check('icons 192 + 512 present', sizes.includes('192x192') && sizes.includes('512x512'), sizes.join(', '));

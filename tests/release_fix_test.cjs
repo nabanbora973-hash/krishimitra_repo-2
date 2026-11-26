@@ -1,0 +1,11 @@
+const fs=require('fs'),{JSDOM}=require('jsdom');
+(async()=>{const dom=new JSDOM('<body></body>',{url:'http://localhost'});for(const k of ['window','document','localStorage','navigator'])global[k]=dom.window[k];global.matchMedia=dom.window.matchMedia=()=>({matches:true,addEventListener(){}});const {priceBadge}=await import('../src/js/ui.js');let count=0;const check=(c,n)=>{if(!c)throw Error(n);count++};
+check(priceBadge({source:'DEMO'}).includes('DEMO'),'demo');
+const old=priceBadge({source:'LIVE',day:'03/11/2026',ageDays:18});check(old.includes('LAST REPORTED'),'stale label');check(old.includes('03/11/2026'),'date visible');check(old.includes('18'),'age');check(!old.includes('chip live'),'no live chip stale');
+check(priceBadge({source:'LAST KNOWN',govDate:'2026-11-01'}).includes('LAST REPORTED'),'cached');
+check(priceBadge({source:'LIVE',ageDays:0,day:'14/11/2026'}).includes('GOVERNMENT FEED'),'fresh source not today claim');
+check(!priceBadge({source:'LIVE',day:'<img src=x>'}).includes('<img'),'date escaped by validation');
+check(priceBadge({source:'LIVE'}).includes('date unavailable'),'missing date honest');
+const headers=fs.readFileSync('src/_headers','utf8');for(const k of ['geolocation','camera','microphone'])check(headers.includes(k+'=(self)'),k+' allowed');
+check(fs.readFileSync('src/sw.js','utf8').includes('v445-verified-access'),'cache bump');
+console.log(count+' release-fix checks passed');dom.window.close()})().catch(e=>{console.error(e);process.exit(1)});

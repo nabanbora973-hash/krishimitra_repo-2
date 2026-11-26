@@ -1,0 +1,8 @@
+# Existing production website. Never change this name to create a duplicate.
+# Static assets only: API/feed relays are separate deployments.
+name = "raspy-dust-3258"
+compatibility_date = "2026-11-01"
+
+[assets]
+directory = "./src"
+not_found_handling = "single-page-application"

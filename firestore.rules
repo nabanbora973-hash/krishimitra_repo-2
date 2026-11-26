@@ -1,0 +1,116 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  function signedIn() {
+   return request.auth != null && request.auth.token.get('email_verified',false) == true
+    && request.auth.token.firebase.sign_in_provider != 'anonymous';
+  }
+  function approvedDesk() {
+   return signedIn()
+    && exists(/databases/$(database)/documents/deskApprovals/$(request.auth.uid))
+    && get(/databases/$(database)/documents/deskApprovals/$(request.auth.uid)).data.get('approved',false) == true;
+  }
+  match /deskApprovals/{uid} {
+   allow read: if signedIn() && request.auth.uid == uid;
+   allow write: if false;
+  }
+  function owner(uid) { return signedIn() && request.auth.uid == uid; }
+  function today() { return int((request.time.toMillis() + 19800000) / 86400000); }
+  function validCounter(c) {
+   return c is map && c.keys().hasAll(['date','day','count','lastReportId'])
+    && c.keys().hasOnly(['date','day','count','lastReportId'])
+    && c.date is string && c.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+    && c.day is int && c.day == today()
+    && c.count is int && c.count >= 1 && c.count <= 30
+    && c.lastReportId is string && c.lastReportId.size() > 0 && c.lastReportId.size() <= 500;
+  }
+  function previousCount(before, after) {
+   return before is map && (before.get('day', -1) == after.day
+      || (!before.keys().hasAny(['day']) && before.get('date','') == after.date))
+    ? before.get('count',0) : 0;
+  }
+  function counterChange(before, after) {
+   return after == before || (validCounter(after) && after.count == previousCount(before,after) + 1);
+  }
+  function quotaSpent(id,d) {
+   let path = /databases/$(database)/documents/users/$(request.auth.uid);
+   let before = exists(path) ? get(path).data.get('reportsToday',null) : null;
+   let after = getAfter(path).data.get('reportsToday',null);
+   return validCounter(after) && after.lastReportId == id && after.date == d.date
+    && after.count == previousCount(before,after) + 1;
+  }
+  match /users/{uid} {
+   allow read: if owner(uid);
+   allow create: if owner(uid) && (!request.resource.data.keys().hasAny(['reportsToday'])
+     || (validCounter(request.resource.data.reportsToday) && request.resource.data.reportsToday.count == 1));
+   allow update: if owner(uid) && counterChange(resource.data.get('reportsToday',null),request.resource.data.get('reportsToday',null));
+   allow delete: if false;
+  }
+  function reportSane(d) {
+   return d.keys().hasOnly(['hasPhoto','mandiId','mandiName','district','crop','modal','min','max','note','reporter','uid','date','at','updatedAt'])
+    && d.uid is string && d.mandiName is string && d.mandiName.size() >= 2 && d.mandiName.size() <= 80
+    && d.mandiId is string && d.mandiId.size() <= 160
+    && d.district is string && d.district.size() <= 100
+    && d.crop is string && d.crop.size() >= 2 && d.crop.size() <= 40
+    && d.modal is int && d.modal > 0 && d.modal < 1000000
+    && (d.min == null || (d.min is number && d.min > 0 && d.min < 1000000))
+    && (d.max == null || (d.max is number && d.max > 0 && d.max < 1000000))
+    && (d.min == null || d.max == null || d.min <= d.max)
+    && d.note is string && d.note.size() <= 200
+    && d.reporter is string && d.reporter.size() <= 100
+    && d.hasPhoto is bool && d.at is number && d.updatedAt == request.time
+    && d.date is string && d.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+  }
+  match /mandiReports/{id} {
+   allow read: if signedIn();
+   allow create: if approvedDesk() && request.resource.data.uid == request.auth.uid && reportSane(request.resource.data) && quotaSpent(id,request.resource.data);
+   allow update: if approvedDesk() && resource.data.uid == request.auth.uid && request.resource.data.uid == request.auth.uid
+    && reportSane(request.resource.data) && quotaSpent(id,request.resource.data);
+   allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+  }
+  function demandSane(d) {
+   return d.keys().hasOnly(['id','deskId','deskName','district','crop','qtyQtl','maxPrice','needBy','note','phone','status','mine','at','uid','serverAt'])
+    && d.id is string && d.deskId is string && d.deskId.size() <= 160
+    && d.deskName is string && d.deskName.size() >= 2 && d.deskName.size() <= 80
+    && d.district is string && d.district.size() <= 100
+    && d.crop is string && d.crop.size() >= 2 && d.crop.size() <= 40
+    && d.qtyQtl is number && d.qtyQtl > 0 && d.qtyQtl <= 100000
+    && d.maxPrice is number && d.maxPrice > 0 && d.maxPrice < 1000000
+    && d.needBy is string && d.needBy.size() <= 10
+    && d.note is string && d.note.size() <= 200
+    && d.phone is string && d.phone.size() <= 15
+    && d.status == 'open' && d.mine is bool && d.at is number && d.serverAt == request.time;
+  }
+  match /demands/{id} {
+   allow read: if signedIn();
+   allow create: if approvedDesk() && request.resource.data.uid == request.auth.uid && request.resource.data.id == id && demandSane(request.resource.data);
+   allow update: if signedIn() && resource.data.uid == request.auth.uid
+    && resource.data.status == 'open' && request.resource.data.status == 'closed'
+    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','closedAt'])
+    && request.resource.data.closedAt is number;
+   allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+  }
+  function responseSane(r) {
+   return r.keys().hasOnly(['id','demandId','demandCrop','deskName','deskUid','name','phone','village','qtyQtl','price','uid','mine','at','serverAt'])
+    && r.id is string && r.demandId is string && r.demandId.size() > 0 && r.demandId.size() <= 500
+    && r.deskUid is string && r.demandCrop is string && r.demandCrop.size() <= 40
+    && r.deskName is string && r.deskName.size() <= 80
+    && r.name is string && r.name.size() >= 2 && r.name.size() <= 60
+    && r.phone is string && r.phone.size() <= 15 && r.village is string && r.village.size() <= 60
+    && r.qtyQtl is number && r.qtyQtl > 0 && r.qtyQtl <= 100000
+    && r.price is number && r.price >= 100 && r.price <= 50000
+    && r.mine is bool && r.at is number && r.serverAt == request.time;
+  }
+  function recipientOK(r) {
+   let d = get(/databases/$(database)/documents/demands/$(r.demandId)).data;
+   return d.status == 'open' && d.uid == r.deskUid && r.qtyQtl <= d.qtyQtl
+    && r.demandCrop == d.crop && r.deskName == d.deskName;
+  }
+  match /demandResponses/{id} {
+   allow read: if signedIn() && (resource.data.uid == request.auth.uid || resource.data.deskUid == request.auth.uid);
+   allow create: if signedIn() && request.resource.data.uid == request.auth.uid
+    && responseSane(request.resource.data) && recipientOK(request.resource.data);
+   allow update, delete: if false;
+  }
+ }
+}

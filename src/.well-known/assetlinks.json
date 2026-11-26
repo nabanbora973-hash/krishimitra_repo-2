@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "dev.workers.nabanbora973.raspy_dust_3258.twa",
+      "sha256_cert_fingerprints": [
+        "A2:E2:02:80:75:D8:C7:D0:88:C8:2D:5D:60:95:B4:A7:0A:39:43:13:E9:B6:6B:49:61:A9:D4:34:A8:07:71:36"
+      ]
+    }
+  }
+]

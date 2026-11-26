@@ -1,3 +1,4 @@
+import { detailOpen } from "./polish.js";
 // ============================================================================
 //  SELL DECISION — the verdict screen.
 //  Merge of the original prototype's screens + the best ideas from the hosted
@@ -16,7 +17,7 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
 import { currentVerdictText, shareText, copyText } from "./share.js";
 import { speak, stopSpeaking, speakable, voiceOutputSupported } from "./voice.js";
 import { CROPS } from "./crops.js";
-import { toast, liveBadge, demoBadge, rupees } from "./ui.js";
+import { priceBadge, toast, liveBadge, demoBadge, rupees } from "./ui.js";
 import { trendChartHTML, confidenceRingHTML } from "./chart.js";
 import { priceSourceLine } from "./live-prices.js";
 import { loadSales } from "./sales.js";
@@ -223,7 +224,10 @@ function weatherStripHTML(){
     <div class="wstrip">
       <div class="whead"><b>Field weather</b> <span class="chip live">LIVE</span>
         <span class="dim">Open-Meteo · ${esc(state.profile?.village) || "your location"}</span></div>
-      <div class="wrow">${cells}</div>
+      <details class="km-details weather-details" data-km-detail="weather" ${detailOpen('weather')}>
+        <summary><span><span data-i18n="ui.todayWeather">Today’s weather</span><strong class="weather-now">${tmax[0] != null ? Math.round(tmax[0]) + '°' : '—'}</strong><span class="weather-rain">💧 ${rain[0] != null ? Math.round(rain[0]) + '%' : '—'}</span></span><span class="km-details-action" data-i18n="ui.forecast">5-day forecast</span></summary>
+        <div class="wrow">${cells}</div>
+      </details>
       <div class="wadv">${advisory}</div>
     </div>`;
 }
@@ -539,7 +543,7 @@ export function renderSell(){
   // give. Saying "WAIT — no market data" and then flipping to "SELL" ten
   // seconds later looks like the app changed its mind; say it is still asking.
   const stillLoading = !state.marketsLoaded && !(state.markets || []).length;
-  const badge = src.source === "LIVE" ? liveBadge() : demoBadge();
+  const badge = priceBadge(src);
   const cropLabel = d.crop.label || d.season.crop;
 
   // A farm outside coverage gets one honest screen: its own position, the form
@@ -577,6 +581,12 @@ export function renderSell(){
       <h1 class="ghello">${greeting()}${farmerName()}.</h1>
       <p class="gsub">Here's what the market is telling you about your <b>${cropLabel.toLowerCase()}</b> crop today${d.local ? ` · ${esc(state.profile?.village)}` : ""}.</p>
     </div>
+
+    <div class="km-context-row">
+      <span class="km-context-chip">${esc(cropLabel)}</span>
+      <span class="km-context-chip">${esc(state.profile?.village || 'Your farm')}</span>
+    </div>
+    <div class="km-primary-source">${badge}</div>
 
     ${stillLoading ? `
     <div class="card verdict wait" style="margin-top:6px">
@@ -625,8 +635,10 @@ export function renderSell(){
     ${demandStripHTML()}
     ${weatherStripHTML()}
 
-    <div class="grid2" style="margin-top:14px">
-      <div class="card">
+    <div class="grid2 km-decision-grid" style="margin-top:14px">
+      <details class="card km-details km-trend-card" data-km-detail="trend" ${detailOpen('trend', true)}>
+        <summary><span data-i18n="ui.priceHistory">Price history & market trends</span><span class="km-summary-icon" aria-hidden="true"></span></summary>
+        <div class="km-details-content">
         <div class="cardhead">
           <b>${ACTIVE_RANGE}-day price trend</b>
           <div class="pills">
@@ -637,20 +649,26 @@ export function renderSell(){
         ${trendMarketSelectHTML()}
         ${trendChartHTML({ ...priceSeries(state.markets, ACTIVE_RANGE, TREND_PICK), activeRange: ACTIVE_RANGE })}
         ${TREND_PICK === "__all__" ? `<div class="sourcenote">Each mandi's own series, averaged day by day — a trend that is not an artefact of one gate's price.</div>` : ""}
-      </div>
+        </div>
+      </details>
 
-      <div class="card">
+      <div class="card km-earnings-card">
+        <div class="km-section-kicker" data-i18n="ui.takeHome">YOUR HARVEST · THE ESTIMATE</div>
         <b>What you would actually earn</b>
         <div class="earn">${d.best ? rupees(d.best.earnings) : "—"}</div>
         <div class="statlabel">${d.best
           ? `at ${d.best.name}, after transport — ${rupees(d.best.netPerQtl)}/qtl net × ${food(d.qty)} quintals`
           : "set your harvest quantity to see this"}</div>
         ${wholesaleHintHTML(d)}
+        <details class="km-details km-cost-details" data-km-detail="cost" ${detailOpen('cost')}>
+          <summary><span data-i18n="ui.breakdown">View earnings breakdown</span><span class="km-summary-icon" aria-hidden="true"></span></summary>
         <table class="minitable">
           <tr><td>Gross @ ${d.best ? rupees(d.best.price) : "—"}/qtl</td><td>${d.best ? rupees(d.best.price * d.qty) : "—"}</td></tr>
           <tr><td>Transport (${d.best ? d.best.distanceKm + " km" : "—"})</td><td>− ${d.best ? rupees(d.best.transport * d.qty) : "—"}</td></tr>
           <tr class="tot"><td>Net to you</td><td>${d.best ? rupees(d.best.earnings) : "—"}</td></tr>
         </table>
+        </details>
+        <div class="km-estimate-note" data-i18n="ui.estimateNote">Estimate, not a guaranteed selling price. Check the reporting date and confirm with the market.</div>
         ${d.split ? `
         <div class="splitbox">
           <b>Sell ${food(d.split.sellQty)} qtl now</b> → ${rupees(d.split.sellValue)}<br>

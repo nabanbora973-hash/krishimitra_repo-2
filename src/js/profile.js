@@ -1,3 +1,4 @@
+import { mountApprovalInfo } from "./access.js";
 // Farm profile — permanent details, geocoded live (Open-Meteo geocoding, no key).
 import { state } from "./state.js";
 import { saveProfile } from "./store.js";
@@ -18,6 +19,7 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 export function renderProfile(){
+  queueMicrotask(mountApprovalInfo);
   const v = document.getElementById('view-profile');
   const p = state.profile || {};
   const mandi = isMandi();

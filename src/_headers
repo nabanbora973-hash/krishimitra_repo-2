@@ -11,6 +11,16 @@
 # NOT fingerprinted, so an immutable header would pin a year-old module after
 # one deploy. Default revalidation is the safe default here.
 
+# ── Baseline security headers (added Nov 2026) ─────────────────────────────
+# None of these were set before. A Content-Security-Policy is deliberately NOT
+# added yet: the app uses inline <style> and inline event handlers, so a strict
+# CSP would blank the screen. Add it later together with the refactor.
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(self), camera=(self), microphone=(self), payment=()
+
 /sw.js
   Cache-Control: public, max-age=0, must-revalidate
   Service-Worker-Allowed: /
@@ -23,3 +33,9 @@
 
 /sitemap.xml
   Content-Type: application/xml; charset=utf-8
+
+# Digital Asset Links — read fresh every time. A cached copy silently breaks
+# Trusted Web Activity verification, which shows up as a browser bar in the app.
+/.well-known/assetlinks.json
+  Content-Type: application/json
+  Cache-Control: no-store

@@ -1,3 +1,4 @@
+import { verifiedAccount } from "./access.js";
 // UI helpers: router, badges, toast, formatting, states. No imports.
 const IS_TEST = typeof navigator !== 'undefined' && /jsdom/i.test(navigator.userAgent || '');
 // Motion is decoration: when the OS asks for less of it, none of it is added.
@@ -8,6 +9,7 @@ const REDUCED_MOTION = typeof matchMedia === 'function'
 let CURRENT = 'sell';
 
 export function show(viewId){
+  if (viewId !== "auth" && !verifiedAccount()) viewId = "auth";
   const prev = CURRENT;
   CURRENT = viewId;
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active', 'km-enter'));
@@ -49,6 +51,7 @@ export function initBackNavigation(onLeave){
     if (!history.state || !history.state.kmView) history.replaceState({ kmView: CURRENT }, '', '#' + CURRENT);
   } catch {}
   window.addEventListener('popstate', e => {
+    if (!verifiedAccount()) { hideApp(); show('auth'); return; }
     const target = (e.state && e.state.kmView) || null;
     if (!target){ if (typeof onLeave === 'function') onLeave(); return; }
     CURRENT = target;
@@ -88,6 +91,7 @@ export function liftSplash(){
 }
 
 export function showApp(){
+  if (!verifiedAccount()) { hideApp(); show("auth"); return; }
   document.getElementById('app').style.display = 'flex';
   liftSplash();
 }
@@ -154,4 +158,16 @@ export function roadmapCardHTML(){
         ${items.map(([t, d]) => `<div class="rmitem"><span class="chip ${t.startsWith("LIVE") ? "live" : "demo"}">${t.startsWith("LIVE") ? "LIVE" : "NEXT"}</span><div><b>${t}</b><div class="dim">${d}</div></div></div>`).join("")}
       </div>
     </div>`;
+}
+
+// Retrieval status is not the age of the government's observation.
+// Keep the reporting date beside the decision, not hidden in source details.
+export function priceBadge(src = {}){
+  if(src.source !== 'LIVE' && src.source !== 'LAST KNOWN') return demoBadge();
+  const raw = String(src.day || src.govDate || '');
+  const date = /^\d{2}\/\d{2}\/\d{4}$|^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : '';
+  const age = Number.isFinite(src.ageDays) && src.ageDays >= 0 ? src.ageDays : null;
+  const historical = src.source === 'LAST KNOWN' || (age !== null && age > 0);
+  const label = historical ? 'LAST REPORTED' : 'GOVERNMENT FEED';
+  return `<span class="price-freshness"><span class="chip ${historical ? 'price-old' : 'live'}" data-i18n="price.${historical ? 'lastReported' : 'governmentFeed'}">${label}</span> <span class="price-report-date"><span data-i18n="price.reported">Reported</span>: ${date || '<span data-i18n="price.unknownDate">date unavailable</span>'}${age !== null ? ` · ${age} <span data-i18n="price.daysOld">days old</span>` : ''}</span></span>`;
 }

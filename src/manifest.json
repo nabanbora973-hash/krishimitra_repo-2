@@ -1,7 +1,7 @@
 {
-  "name": "KrishiMitra — Aaj ka Mandi Bhav",
+  "name": "KrishiMitra \u2014 Aaj ka Mandi Bhav",
   "short_name": "KrishiMitra",
-  "description": "Aaj ka mandi bhav (AGMARKNET sarkari rate), sell decision, transport kharcha ke baad net, aur mausam — Assam ka kisan app.",
+  "description": "Aaj ka mandi bhav (AGMARKNET sarkari rate), sell decision, transport kharcha ke baad net, aur mausam \u2014 Assam ka kisan app.",
   "start_url": "/#sell",
   "scope": "/",
   "display": "standalone",
@@ -10,8 +10,8 @@
     "minimal-ui"
   ],
   "orientation": "any",
-  "background_color": "#FCFEFC",
-  "theme_color": "#0F5132",
+  "background_color": "#f4f6f0",
+  "theme_color": "#103e32",
   "lang": "en-IN",
   "icons": [
     {

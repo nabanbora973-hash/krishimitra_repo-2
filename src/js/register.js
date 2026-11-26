@@ -49,7 +49,7 @@ export function renderRegister(){
         <div class="reghead">
           <div class="logo">🌱</div>
           <h1>Register your farm</h1>
-          <p class="regsub">Three short steps. No account needed — your details stay on this device.</p>
+          <p class="regsub">Three short steps to set up your farm profile. Your verified account is already signed in.</p>
         </div>
 
         <div class="regsteps">
@@ -68,7 +68,7 @@ export function renderRegister(){
         <div class="herr" id="regErr"></div>
 
         <div class="regfoot">
-          <a class="demo-link" href="#" id="regSkip">Skip for now — explore the demo</a>
+          <a class="demo-link" href="#" id="regSkip">Set up later</a>
           ${state.demo ? '' : '<a class="demo-link" href="#" id="regLogin">Already have an account? Log in</a>'}
         </div>
       </div>
@@ -469,14 +469,14 @@ async function finishMandi(btn){
   showApp();
   document.dispatchEvent(new CustomEvent('km:data-changed'));
   show('dashboard');                          // the report desk lives here
-  toast(`${mandiName} desk ready — post today's rate ✓`);
+  toast(`${mandiName} desk profile ready — manual approval is required before posting`);
 }
 
 function skip(){
   try { localStorage.setItem('km_registered', 'skipped'); } catch (e){}
   showApp();
   show('sell');
-  toast('Demo mode — you can register any time from Farm Profile');
+  toast('You can finish setup any time from Farm Profile');
 }
 
 export { skip };

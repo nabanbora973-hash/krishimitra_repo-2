@@ -1,5 +1,6 @@
+import { verifiedAccount, mountApprovalInfo } from "./access.js";
 // App orchestrator: boots the app, watches auth, loads data, wires the demo mode.
-import { state } from "./state.js";
+import { state, resetData } from "./state.js";
 
 // Farmer- and mandi-typed text must never be parsed as markup (live XSS test, 2026-11-08).
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
@@ -10,7 +11,7 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
 const safeSrc = u => /^(https?:|data:image\/)/i.test(String(u || '')) ? String(u) : '';
 import { revealView, animate, ease, prefersReduced } from "./motion.js";
 import { show, toast, loadingHTML, setDemoBanner, setDemoBannerText, setUserChip, showApp, hideApp } from "./ui.js";
-import { renderAuth, initAuth, logout } from "./auth.js";
+import { renderAuth, renderVerification, initAuth, logout } from "./auth.js";
 import { renderHaat, preloadHaats } from "./haats.js";
 import { openFeedback, loadFeedback, feedbackText } from "./feedback.js";
 import { renderRegister } from "./register.js";
@@ -37,6 +38,7 @@ import { mountNavGlide, placeNavGlide } from "./navglide.js";
 import { renderReportDesk } from "./report-desk.js";
 import { startMandiFeed, seedBoardFromDevice, flushPending } from "./mandi-feed.js";
 import { getLang, setLang, applyI18n, t } from "./i18n.js";
+import { maybeShowOnboarding, ensureHelpButton } from "./onboarding.js";
 import { checkAlerts, notify, alertText } from "./rate-alerts.js";
 
 // If Firebase keys are not configured yet, run in demo mode automatically —
@@ -96,7 +98,7 @@ function openRegister(){
 }
 try { window.kmOpenRegister = openRegister; } catch {}
 // Read-only window into the app state, for support and for tests. Harmless.
-try { window.__kmState = () => state; } catch {}
+// Internal app state is not exposed as a production debug hook.
 
 // The splash is an overlay in index.html, not a screen: nothing behind it
 // changes, so guest-first stays guest-first and no sign-in wall appears with it.
@@ -191,9 +193,8 @@ async function boot(){
   // It used to be the only way in without Firebase, and it also switched
   // the government feed off. Now that sign-in works, a stale ?local=1 left in a
   // bookmark must not quietly downgrade the app — it only skips the demo seed.
-  const LOCAL_MODE = params.get('local') === '1';
-  state.demo = offlineBuild() || !firebaseConfigured()
-            || params.get('demo') === '1';
+  const LOCAL_MODE = false;
+  state.demo = false;
   state.localMode = LOCAL_MODE;
 
   // Must load the crop table BEFORE rendering the season view — but a missing
@@ -290,42 +291,18 @@ async function boot(){
     if (btn) btn.click();
   } catch {}
 
-  // Guest / demo start: device-only data, the app opens immediately.
-  function startGuest(){
-    state.demo = true;
-    state.user = { uid: 'demo', email: 'offline demo' };
-    const ls = k => JSON.parse(localStorage.getItem('km_demo_' + k) || 'null');
-    state.profile = ls('profile') || (LOCAL_MODE ? null : DEMO_SEED.profile);
-    state.season  = ls('season')  || (LOCAL_MODE ? null : DEMO_SEED.season);
-    seedIfEmpty(offlineBuild() || new URLSearchParams(location.search).get('demo') === '1');
-    setDemoBanner(true);
-    setUserChip(LOCAL_MODE ? 'This device' : 'Guest');   // (banner text is refreshed after prices load)
-    // The header button offers an account instead of ending a session that never existed.
-    const lo = document.getElementById('logoutBtn');
-    if (lo && !LOCAL_MODE){ lo.textContent = 'Sign in'; lo.title = 'Account is optional — it only adds cloud backup'; }
-    applyRole();
-    seedBoardFromDevice();
-    startMandiFeed().catch(() => {});      // cloud board; device mirror still answers
-    showApp();
-    liftSplash();               // the app is visible; the logo has done its job
-    renderDashboard();          // dashboard is populated before any network
-    renderProfile();          // re-render forms now that state has data
-    renderSeason();
-
-    // No forced registration. The farmer lands on the decision screen with sample
-    // data clearly labelled; setting up the farm is one tap away (setupCard).
-    renderSell(); renderAlerts(); renderSales();
-    renderSetupCard();
-    show('sell');
-    loadLiveData();            // never awaited — the verdict repaints when data lands
-    return;
-  }
-
   initAuth(async user => {
-    // NO LOGIN WALL. A farmer who just installed the app must see a price, not a
-    // password box. Signed out simply means "this device only": everything runs,
-    // an account is offered later (Profile → Cloud backup) and never demanded.
-    if (!user){ startGuest(); return; }
+    if (!verifiedAccount(user)) {
+      state.demo = false; state.localMode = false;
+      resetData();
+      document.getElementById('kmDeskApprovalInfo')?.remove();
+      hideApp();
+      if (user && !user.isAnonymous) renderVerification(user); else renderAuth();
+      show('auth'); liftSplash();
+      return;
+    }
+    state.demo = false; state.localMode = false;
+    setDemoBanner(false);
     setUserChip(user.email);
     // A real uid just arrived: everything the board queued while signed out can
     // finally be written, and the farmer should see it happen.
@@ -342,6 +319,7 @@ async function boot(){
     // put a real screen up immediately and upgrade it when the cloud answers.
     renderProfile(); renderSeason(); renderSell(); renderAlerts(); renderSales();
     show(state.profile ? homeView() : 'sell');
+    offerOnboarding();
 
     let cloudOk = true;
     try {
@@ -371,6 +349,7 @@ async function boot(){
       return;
     }
     show(state.profile ? homeView() : (cloudOk ? 'profile' : 'sell'));
+    mountApprovalInfo();
     loadLiveData();
   });
 }
@@ -646,6 +625,17 @@ if (isIOS() && !isStandaloneApp()){
 }
 
 window.kmFocusSellForm = focusSellForm;
+
+// First-run tour. Deliberately AFTER the decision screen is on screen: the farmer
+// sees a working app first, and the tour explains it rather than delaying it.
+// A skip or a close is remembered, and the "?" in the topbar reopens it any time.
+function offerOnboarding(){
+  try {
+    ensureHelpButton();
+    maybeShowOnboarding();
+  } catch (e) { console.warn('[onboarding] skipped', e && e.message); }
+}
+window.kmOfferOnboarding = offerOnboarding;
 
 // boot() is async. An unhandled rejection here used to fail silently and leave the
 // white page nobody could explain. Show the sign-in screen instead: it is the one

@@ -1,6 +1,7 @@
 // Auth screen: renders the login/signup form and wires the buttons.
 import { auth, login, signup, onAuthStateChanged, logout, signInWithGoogle } from "./firebase.js";
 import { sendOtp, verifyOtp, normalisePhone, prettyPhone, resetOtp, phoneSession } from "./otp.js";
+import { resendVerification, refreshVerification } from "./firebase.js";
 import { state } from "./state.js";
 import { cloudConfigured } from "./backup.js";
 import { t } from "./i18n.js";
@@ -8,34 +9,23 @@ import { PHONE_SIGNIN } from "./config.js";
 
 export function renderAuth(){
   const v = document.getElementById('view-auth');
-  const sess = phoneSession();
-  if (sess && !state.user){
-    // A phone session is a device account: the number was verified, but there is
-    // no Firebase user behind it. Marked local so profile writes stay on device.
-    state.demo = true;
-    state.localMode = true;
-    state.user = { uid: sess.uid, email: '', phone: '+91' + sess.phone, isDemoAccount: true };
-  }
   v.innerHTML = `
-    <div class="card authcard">
+    <div class="card authcard auth-sunrise">
+      <aside class="auth-landscape" aria-label="Illustration of farm fields at sunrise">
+        <div class="auth-landscape-brand"><span aria-hidden="true">✳</span> KrishiMitra</div>
+        <div class="auth-landscape-copy"><div class="auth-eyebrow">ROOTED IN YOUR EVERYDAY</div><h2>Your harvest.<br>A clearer<br><em>decision.</em></h2><p>Market prices, travel costs and weather.<br>A little more clarity before the journey.</p></div>
+        <div class="auth-landscape-note"><span aria-hidden="true">◌</span> Know Your Market. Choose Your Moment.</div>
+      </aside><div class="auth-form-side">
       <div class="logo"><svg viewBox="0 0 48 48" width="44" height="44" aria-hidden="true">
         <path d="M24 43c0-9 0-15 0-20" stroke="#0B4A2F" stroke-width="3" stroke-linecap="round" fill="none"/>
         <path d="M24 24C13 24 7 17 7 7c10 0 17 6 17 17z" fill="#0B4A2F"/>
         <path d="M24 30c11 0 17-7 17-17-10 0-17 6-17 17z" fill="#17784A"/>
       </svg></div>
-      <h1>KrishiMitra</h1>
-      <div class="tag">Know Your Market. Choose Your Moment.</div>
+      <div class="auth-eyebrow">YOUR FARM. YOUR NEXT STEP.</div><h1>Welcome to KrishiMitra<span>.</span></h1>
+      <div class="tag">Sign in with Google, or verify your email to continue.</div>
 
-      <!-- ONE decision on the first screen. A farmer who wants a price should
-           never meet Google / OTP / email before he meets a number. -->
-      <button class="btn" id="btnLocal" style="width:100%;padding:15px;font-size:18px;margin-top:16px">
-        ${t('auth.start')}</button>
-      <div class="statlabel" style="margin-top:8px">${t('auth.noaccount')}</div>
-
-      <button class="btn ghost" id="btnShowSignin" style="width:100%;margin-top:16px;font-weight:600">
-        ${t('auth.haveAccount')}</button>
-
-      <div id="signinPane" style="display:none;margin-top:16px;border-top:1px solid #DDEBE1;padding-top:14px">
+      <div id="signinPane">
+        <div class="auth-mode-tabs" role="group" aria-label="Account action"><button type="button" id="modeLogin" aria-pressed="true">Log in</button><button type="button" id="modeSignup" aria-pressed="false">Create account</button></div>
         <button class="btn google" id="btnGoogle" type="button">
           <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
             <path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-2.8-.4-4.1H24v7.8h12.1c-.2 2-1.5 5-4.4 7l6.7 5.2c3.9-3.6 6.7-8.9 6.7-15.9z"/>
@@ -48,10 +38,10 @@ export function renderAuth(){
 
         <div class="orsep"><i></i><span>or use your email</span><i></i></div>
 
-        <input id="email" type="email" placeholder="Email" autocomplete="email">
-        <input id="pass" type="password" placeholder="Password (min 6 characters)" autocomplete="current-password">
+        <label class="auth-input-label" for="email">Email address</label><input id="email" type="email" placeholder="you@example.com" autocomplete="email">
+        <label class="auth-input-label" for="pass">Password</label><div class="auth-password"><input id="pass" type="password" placeholder="Enter your password" autocomplete="current-password"><button type="button" id="authShowPass" aria-label="Show password" aria-pressed="false">Show</button></div><p class="auth-password-help" id="authPassHelp" hidden>Use at least 6 characters to create your account.</p>
         <button class="btn" id="btnLogin" style="width:100%">Log in</button>
-        <button class="btn orange" id="btnSignup" style="width:100%;margin-top:8px">Create account</button>
+        <button class="btn orange" id="btnSignup" style="width:100%;margin-top:8px" hidden>Create account</button>
 
         <div id="phoneBlock" style="display:none;margin-top:12px">
           <div class="orsep"><i></i><span>or use your phone</span><i></i></div>
@@ -70,12 +60,33 @@ export function renderAuth(){
           <div id="otpRecaptcha"></div>
         </div>
 
-        <div id="autherr" style="margin-top:10px;font-size:13.5px;line-height:1.45"></div>
-        <button class="btn ghost" id="btnBackGuest" style="width:100%;margin-top:10px;font-weight:600">
-          ← ${t('auth.start')}</button>
-        <div class="statlabel" style="margin-top:8px">${t('auth.whyAccount')}</div>
+        <div id="autherr" role="status" aria-live="polite"></div>
+      </div>
+      <div class="auth-form-note">A verified email account is required. Public mandi posts also need manual desk approval.</div>
       </div>
     </div>`;
+
+  let accountMode = 'login';
+  const setMode = mode => {
+    accountMode = mode;
+    document.getElementById('modeLogin').setAttribute('aria-pressed', String(mode === 'login'));
+    document.getElementById('modeSignup').setAttribute('aria-pressed', String(mode === 'signup'));
+    document.getElementById('btnLogin').hidden = mode !== 'login';
+    document.getElementById('btnSignup').hidden = mode !== 'signup';
+    document.getElementById('pass').autocomplete = mode === 'signup' ? 'new-password' : 'current-password';
+    document.getElementById('authPassHelp').hidden = mode !== 'signup';
+    document.getElementById('autherr').textContent = '';
+  };
+  document.getElementById('modeLogin').onclick = () => setMode('login');
+  document.getElementById('modeSignup').onclick = () => setMode('signup');
+  document.getElementById('authShowPass').onclick = event => {
+    const input = document.getElementById('pass');
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    event.currentTarget.textContent = show ? 'Hide' : 'Show';
+    event.currentTarget.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    event.currentTarget.setAttribute('aria-pressed', String(show));
+  };
 
   // A note, not a wall. Amber, small, and never the last word on the screen.
   const err = (m, kind) => {
@@ -142,6 +153,8 @@ export function renderAuth(){
       const code = e.code || e.message || '';
       err(friendly(code));
       gbtn.disabled = false;
+    } finally {
+      gbtn.disabled = false;
       gbtn.querySelector('span').textContent = 'Continue with Google';
     }
   };
@@ -180,7 +193,7 @@ export function renderAuth(){
 
   // Enter key submits login
   document.getElementById('pass').addEventListener('keydown', ev => {
-    if (ev.key === 'Enter') document.getElementById('btnLogin').click();
+    if (ev.key === 'Enter') document.getElementById(accountMode === 'signup' ? 'btnSignup' : 'btnLogin').click();
   });
 }
 
@@ -197,7 +210,8 @@ function friendly(code){
     'auth/account-exists-with-different-credential':
       'This email already has an account with a password — log in with email instead.',
     'auth/popup-closed-by-user': 'Google sign-in was closed before finishing.',
-    'auth/popup-blocked':        'Your browser blocked the popup — trying a full-page sign-in…',
+    'auth/popup-blocked':        'Allow popups for this site, then try Google sign-in again.',
+    'auth/google-timeout': 'Google sign-in did not finish. Close any old sign-in window, allow popups, and retry. If the installed app still hangs, open the same site in Chrome or Safari.',
     'auth/cancelled-popup-request': 'Google sign-in was cancelled.',
     'auth/network-request-failed-google': 'Network problem — check your connection.',
     'auth/network-request-failed':'Network problem — check your internet connection.'
@@ -214,3 +228,25 @@ export function initAuth(onUser){
 }
 
 export { logout };
+
+export function renderVerification(user){
+  renderAuth();
+  const side = document.querySelector('.auth-form-side');
+  side.innerHTML = `<div class="auth-eyebrow">ONE MORE STEP</div><h1>Verify your email<span>.</span></h1><p class="tag">Open the verification link sent to your email, then return here.</p><p id="verifyEmailAddress" style="overflow-wrap:anywhere;font-weight:600"></p><button class="btn" id="checkVerification" type="button">I have verified my email</button><button class="btn ghost" id="resendVerification" type="button" style="margin-top:12px">Resend verification email</button><div id="autherr" role="status" aria-live="polite"></div><button class="btn ghost" id="verificationLogout" type="button">Use another account / Log out</button><p class="auth-form-note">Email verification confirms access to an inbox. Mandi posting still requires separate manual approval.</p>`;
+  document.getElementById('verifyEmailAddress').textContent = user.email || '';
+  const status = document.getElementById('autherr');
+  const run = async (button, task) => {
+    button.disabled = true;
+    try { await task(); }
+    catch(e){ status.textContent = e.code === 'auth/too-many-requests' ? 'Too many attempts. Please wait before retrying.' : 'Could not complete this step. Check your connection and try again.'; }
+    finally { button.disabled = false; }
+  };
+  document.getElementById('resendVerification').onclick = event => run(event.currentTarget, async()=>{
+    await resendVerification(); status.textContent = 'Verification email sent. Check your inbox and spam folder.';
+  });
+  document.getElementById('checkVerification').onclick = event => run(event.currentTarget, async()=>{
+    if (await refreshVerification()) location.reload();
+    else status.textContent = 'Email is not verified yet. Open the email link first, then check again.';
+  });
+  document.getElementById('verificationLogout').onclick = async()=>{ await logout(); location.reload(); };
+}

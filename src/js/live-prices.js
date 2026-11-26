@@ -215,7 +215,7 @@ export function relayPool() {
   const list = [device, CFG.proxyBase, CFG.proxyBaseAlt]
     .map(u => String(u || '').trim().replace(/\/+$/, ''))
     .filter(u => /^https:\/\//i.test(u));
-  return list.filter((u, i) => list.indexOf(u) === i && !/netlify\.app$/i.test(u));
+  return list.filter((u, i) => list.indexOf(u) === i);
 }
 
 /** Order the pool for THIS device: sticky first, cooled-down relays last. */
@@ -281,10 +281,12 @@ export function relayStatus() {
 }
 
 // Candidate endpoints, best first:
-//   1) OUR OWN SERVER   /api/agmarknet  — the launched site proxies to the ministry
-//      server-side. No CORS problem, and the API key never reaches the browser.
-//   2) MINISTRY DIRECT  api.data.gov.in — used when the site is opened from a plain
-//      file or has no server proxy (a browser may still refuse it; we handle that).
+//   1) RELAY (optional)  <base>/prices — an edge worker the owner configures.
+//      Keeps the key off the device. NOTE: a relay outside India cannot reach
+//      data.gov.in (the ministry refuses datacenter IPs), so this is optional.
+//   2) LOCAL SERVER      /api/agmarknet — only when running tools/serve_local.py.
+//   3) MINISTRY DIRECT   api.data.gov.in — the path that actually works for an
+//      Indian visitor, because their own IP is what the ministry accepts.
 export function candidateUrls(cropKey){
   const commodity = COMMODITY[cropKey];
   if (!commodity) throw new Error(`No AGMARKNET commodity mapped for "${cropKey}"`);
@@ -302,14 +304,11 @@ export function candidateUrls(cropKey){
   const p = new URLSearchParams();
   p.set("crop", cropKey);            // the proxy maps crop → commodity server-side
 
-  // A Cloudflare Worker speaks a different dialect to the Netlify function:
-  // /prices (or /) rather than /api/agmarknet. Recognise it so a shipped worker
-  // URL works out of the box, and skip the Netlify paths entirely — they are
-  // known to fail from outside India and cost 14 seconds before the real answer.
-  // Any https base that is not the old Netlify function speaks the worker
-  // dialect (/prices?crop=…). That covers workers.dev, a Vercel relay pinned to
-  // an Indian region, and any custom domain the owner points at it.
-  const isWorker = !!base && !/netlify\.app$/i.test(base);
+  // Any https relay base speaks the /prices dialect. That covers a Cloudflare
+  // Worker (workers.dev or a custom domain) and any other relay the owner points
+  // at data.gov.in. the retired hosting provider is no longer used: the serverless function ran
+  // outside India, and the ministry feed refuses datacenter IPs there.
+  const isWorker = !!base;
   p.set("state", "Assam");
   // A key typed into this device must actually reach data.gov.in. It travels to
   // the worker as a query parameter, the worker forwards it, and nothing is
@@ -328,17 +327,18 @@ export function candidateUrls(cropKey){
     for (const host of pool){
       urls.push({ kind: "worker", url: `${host}/prices?${p.toString()}`, base: host });
     }
-  } else if (sameOrigin || base){
+  } else if (sameOrigin){
+    // Same-origin /api/agmarknet — provided by the local dev server
+    // (python3 tools/serve_local.py). A static deploy simply 404s here fast.
     urls.push({ kind: "server", url: `${base}/api/agmarknet?${p.toString()}` });
-    // Manual drag-and-drop deploys don't apply netlify.toml redirects, so the
-    // function is also reachable at its raw path - try both before giving up.
-    urls.push({ kind: "server", url: `${base}/.netlify/functions/agmarknet?${p.toString()}` });
   }
 
-  // Direct from the browser is a last resort only: data.gov.in does not send
-  // CORS headers, so a browser usually gets "blocked (CORS/network)" — it is
-  // still worth one try from a plain file:// build, but never behind a worker.
-  if (!deviceBase){
+  // Direct from the browser is the LAST resort, and it is always tried — even
+  // when a relay is configured. An Indian visitor's own IP is exactly what the
+  // ministry accepts, so if the relay is down or geo-blocked the honest answer
+  // is "ask the ministry yourself", not "no data". The key used here is either
+  // the public sample key or the key this device already stored itself.
+  {
     const qs = new URLSearchParams();
     qs.set("api-key", apiKey());
     qs.set("format", "json");
@@ -416,9 +416,8 @@ export async function fetchAgmarknet(cropKey, { timeoutMs = 7000 } = {}){
         ? `timed out after ${Math.round(budget/1000)}s`
         : e.message;
       // Short labels: the banner has room for three, not for a paragraph each.
-      const who = kind === "worker" ? "edge worker"
-        : kind === "server"
-          ? (url.includes("/.netlify/functions/") ? "netlify function" : "our server")
+      const who = kind === "worker" ? "edge relay"
+        : kind === "server" ? "local server"
           : "direct data.gov.in";
       const short = /timed out/.test(msg) ? "timed out"
         : /HTTP (\d+)/.test(msg) ? "HTTP " + msg.match(/HTTP (\d+)/)[1]

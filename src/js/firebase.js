@@ -88,7 +88,9 @@ export const auth = { __kmSentinel: 'auth' };
 
 export async function signup(email, pass){
   const s = await loadFirebase();
-  return s.authMod.createUserWithEmailAndPassword(s.auth, email, pass);
+  const result = await s.authMod.createUserWithEmailAndPassword(s.auth, email, pass);
+  await s.authMod.sendEmailVerification(result.user);
+  return result;
 }
 
 export async function login(email, pass){
@@ -108,37 +110,26 @@ export async function logout(){
 // third-party storage will open the Google window, let the person finish, and
 // then never hand the answer back: signInWithPopup neither resolves nor throws,
 // so the button sat on "Opening Google…" for ever with no error and no way out.
-// Measured on a real device, 10 Nov 2026. After popupMaxMs we treat that as
-// blocked and take the full-page path, which does not need the handshake.
+// A bounded wait restores the UI on stalled popup handshakes. No automatic
+// cross-origin redirect: it may also fail under third-party storage restrictions.
 const POPUP_MAX_MS = 30000;
 
 export async function signInWithGoogle({ popupMaxMs = POPUP_MAX_MS } = {}){
-  const s = await loadFirebase();
-  const provider = new s.authMod.GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: 'select_account' });
   let timer;
   try {
     return await Promise.race([
-      s.authMod.signInWithPopup(s.auth, provider),
+      (async () => {
+        const s = await loadFirebase();
+        const provider = new s.authMod.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        return s.authMod.signInWithPopup(s.auth, provider);
+      })(),
       new Promise((_, reject) => {
-        timer = setTimeout(
-          () => reject(Object.assign(new Error('popup did not answer'), { code: 'auth/popup-blocked' })),
-          popupMaxMs
-        );
+        timer = setTimeout(() => reject(Object.assign(new Error('Google sign-in timed out'),
+          { code: 'auth/google-timeout' })), popupMaxMs);
       })
     ]);
-  } catch (e){
-    const fallback = ['auth/popup-blocked', 'auth/popup-closed-by-user',
-                      'auth/operation-not-supported-in-this-environment',
-                      'auth/cancelled-popup-request'];
-    if (fallback.includes(e.code)){
-      await s.authMod.signInWithRedirect(s.auth, provider);
-      return null;
-    }
-    throw e;
-  } finally {
-    clearTimeout(timer);          // a popup that did answer must not leave a timer behind
-  }
+  } finally { clearTimeout(timer); }
 }
 
 // A redirect sign-in lands back here with no local state — this resolves it.
@@ -157,32 +148,27 @@ export async function googleRedirectResult(){
  * mode instead of sitting on a blank screen forever.
  */
 export function onAuthStateChanged(_auth, cb){
-  let fired = false;
-  const once = user => { if (!fired){ fired = true; cb(user); } };
-
-  loadFirebase()
-    .then(async s => {
-      // A full-page (redirect) sign-in lands back here with its result STORED,
-      // not applied. Only getRedirectResult() applies it.
-      //
-      // v42.5: googleRedirectResult() below was written for exactly this and
-      // then never called from anywhere — `grep -rn googleRedirectResult js/`
-      // found one hit, the definition. So the popup-blocked fallback sent the
-      // person to Google, signed them up, and dropped them back on the login
-      // screen looking signed out. Resolve it BEFORE subscribing, so the first
-      // auth state we report is the real one instead of a null that would
-      // strand them in guest mode. The 4 s guard keeps a dead network from
-      // holding up the boot.
-      await Promise.race([
-        s.authMod.getRedirectResult(s.auth).catch(() => null),
-        new Promise(r => setTimeout(r, 4000))
-      ]);
-      s.authMod.onAuthStateChanged(s.auth, once);
-    })
-    .catch(() => once(null));
-
-  // A stalled CDN must not hold the app hostage either.
-  setTimeout(() => { if (!fired) once(null); }, 6000);
+  let active = true, received = false, unsubscribe;
+  const deliver = user => {
+    if (!active) return;
+    received = true;
+    Promise.resolve().then(() => cb(user)).catch(e => console.error('[auth] state handler failed', e));
+  };
+  const watchdog = setTimeout(() => { if (!received) deliver(null); }, 6000);
+  loadFirebase().then(s => {
+    if (!active) return;
+    // Subscribe continuously: null at boot must not swallow a later login.
+    unsubscribe = s.authMod.onAuthStateChanged(s.auth, user => {
+      clearTimeout(watchdog);
+      deliver(user);
+    }, e => {
+      console.warn('[auth] observer failed', e);
+      if (!received) deliver(null);
+    });
+    // Consume legacy redirects without delaying observer installation.
+    s.authMod.getRedirectResult(s.auth).catch(e => console.warn('[auth] redirect result', e.code));
+  }).catch(() => { clearTimeout(watchdog); if (!received) deliver(null); });
+  return () => { active = false; clearTimeout(watchdog); unsubscribe?.(); };
 }
 
 /* ---------------------------- Firestore ---------------------------- */
@@ -268,4 +254,19 @@ export function RecaptchaVerifier(_auth, containerId, options){
 export async function signInWithPhoneNumber(_auth, phone, verifier){
   const s = await loadFirebase();
   return s.authMod.signInWithPhoneNumber(s.auth, phone, verifier);
+}
+
+// Verification is checked by Firebase and its signed ID token, not local storage.
+export async function resendVerification(){
+  const s = await loadFirebase();
+  if (!s.auth.currentUser) throw new Error('Sign in first.');
+  return s.authMod.sendEmailVerification(s.auth.currentUser);
+}
+export async function refreshVerification(){
+  const s = await loadFirebase();
+  const user = s.auth.currentUser;
+  if (!user) return false;
+  await s.authMod.reload(user);
+  await user.getIdToken(true);
+  return user.emailVerified === true && !user.isAnonymous;
 }

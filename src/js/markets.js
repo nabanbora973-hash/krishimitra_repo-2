@@ -11,7 +11,7 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
 const safeSrc = u => /^(https?:|data:image\/)/i.test(String(u || '')) ? String(u) : '';
 
 import { CROPS } from "./crops.js";
-import { demoBadge, liveBadge, loadingHTML, errorHTML, rupees, rupees1, pct, toast } from "./ui.js";
+import { priceBadge, demoBadge, liveBadge, loadingHTML, errorHTML, rupees, rupees1, pct, toast } from "./ui.js";
 import { getLivePrices, getMandiBoard, getPriceHistory, priceSourceLine, setLiveConfig } from "./live-prices.js";
 import { directionsUrl, FAR_KM, roadDistanceTable } from "./geo.js";
 import { reportFor, allReports, istToday } from "./mandi-feed.js";
@@ -895,7 +895,7 @@ export function renderMarkets(){
 
   const src = state.priceSource || {};
   const isLive = src.source === 'LIVE' || src.source === 'LAST KNOWN';
-  const badge  = src.source === 'LIVE' ? liveBadge() : demoBadge();
+  const badge  = priceBadge(src);
   const qty  = state.season?.quantityQtl || 10;
   const rows = state.markets || [];
   const ranked = rows.filter(r => r.knownDistance);

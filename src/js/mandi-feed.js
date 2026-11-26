@@ -1,3 +1,4 @@
+import { requireDeskApproval } from "./access.js";
 // ============================================================================
 //  MANDI-REPORTED PRICES  —  the second data source, backed by Firestore
 // ----------------------------------------------------------------------------
@@ -185,6 +186,8 @@ export function stopMandiFeed(){
 // One price per gate per crop per day. A correction overwrites, it never adds a
 // second price for the same day.
 export async function submitReport(input){
+  const access = await requireDeskApproval();
+  if (!access.ok) return access;
   const now = Date.now();
   const rep = {
     mandiId:   String(input.mandiId || normName(input.mandiName)).trim(),
@@ -257,6 +260,8 @@ const pendKey = r => `${r.mandiId || normName(r.mandiName)}|${r.crop}|${r.date}`
 export const pendingWrites = () => readPending().length;
 
 async function pushToCloud(rep){
+  const access = await requireDeskApproval();
+  if (!access.ok) return access;
   if (!cloudOn()) return { ok: false, error: 'device only' };
   try {
     const fb = await import('./firebase.js');
@@ -273,13 +278,14 @@ async function pushToCloud(rep){
     if (spend > REPORT_DAILY_CAP)
       return { ok: false, error: `Aaj ki limit poori (${REPORT_DAILY_CAP} rate/din). Kal naya din — phir bhej sakte hain.` };
 
+    // Rules bind this increment to exactly one report document via lastReportId.
     // Inside a batch every call must be synchronous — doc() is async now, so
     // build the refs with the sync form first.
     const batch = fb.writeBatch(fb.db);
     const userRef = fb.docSync(fb.db, 'users', rep.uid);
     const reportRef = fb.docSync(fb.db, 'mandiReports', id);
     batch.set(userRef,
-      { reportsToday: { date: rep.date, count: spend } }, { merge: true });
+      { reportsToday: { date: rep.date, day: Math.floor((Date.now() + 19800000) / 86400000), count: spend, lastReportId: id } }, { merge: true });
     batch.set(reportRef, {
       hasPhoto: !!rep.photo,
       mandiId: rep.mandiId, mandiName: rep.mandiName, district: rep.district,

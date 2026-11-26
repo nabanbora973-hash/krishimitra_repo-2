@@ -26,18 +26,24 @@
    wins when there is a network, so a deploy reaches phones immediately. The
    cache exists for the offline case, not to pin an old build.
 */
-const VERSION = 'km-pwa-v434';
+const VERSION = 'km-pwa-v445-verified-access';
 
 const SHELL = [
   '/',
   '/index.html',
   '/manifest.json',
   '/css/style.css',
+  '/css/premium.css',
+  '/css/auth-sunrise.css',
+  '/images/auth-fields.svg',
   '/js/alerts.js',
   '/js/app.js',
+  '/js/onboarding.js',
+  '/js/polish.js',
   '/js/assistant-local.js',
   '/js/assistant.js',
   '/js/auth.js',
+  '/js/access.js',
   '/js/backup.js',
   '/js/chart.js',
   '/js/config.js',
@@ -117,8 +123,8 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
 
-  // official price feed + serverless function: always live, never cached
-  if (url.pathname.startsWith('/api/') || url.pathname.includes('/.netlify/functions/')) return;
+  // official price feed: always live, never cached
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/prices')) return;
   // the privacy policy must always be the deployed one (Play Store links here)
   if (url.pathname.startsWith('/privacy')) return;
   // Digital Asset Links must be read fresh — a cached copy breaks app verification

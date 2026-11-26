@@ -1,3 +1,4 @@
+import { requireDeskApproval, verifiedAccount } from "./access.js";
 // ============================================================================
 //  DEMAND BOARD — the desk asks for maal, the farmer answers with quintals.
 // ----------------------------------------------------------------------------
@@ -94,10 +95,12 @@ function validate(input){
 //  which was never going to happen. Ask for an account instead of lying.
 const realUser = () => {
   const u = state.user;
-  return !!(u && u.uid && u.uid !== 'demo' && !u.isDemoAccount);
+  return verifiedAccount(u);
 };
 
 export async function postDemand(input){
+  const access = await requireDeskApproval();
+  if (!access.ok) return access;
   const v = validate(input);
   if (!v.ok) return v;
   if (!realUser())
@@ -106,6 +109,7 @@ export async function postDemand(input){
 
   const demand = {
     id: newId(),
+    uid: state.user.uid,
     deskId: myDeskId(),
     deskName: state.profile?.mandiName || state.profile?.village || 'Mandi desk',
     district: state.profile?.district || '',
@@ -122,7 +126,7 @@ export async function postDemand(input){
 
   try {
     const fb = await import('./firebase.js');
-    await fb.addDoc(fb.collection(fb.db, 'demands'), {
+    await fb.setDoc(fb.doc(fb.db, 'demands', demand.id), {
       ...demand, uid: state.user?.uid || null, serverAt: fb.serverTimestamp()
     });
     return { ok: true, demand, queued: false };
@@ -146,9 +150,11 @@ export async function flushDemandPending(){
   for (const item of q){
     try {
       if (item.kind === 'demand'){
+        const access = await requireDeskApproval();
+        if (!access.ok) continue;
         const d = demands.find(x => x.id === item.id);
         if (!d) continue;
-        await fb.addDoc(fb.collection(fb.db, 'demands'),
+        await fb.setDoc(fb.doc(fb.db, 'demands', d.id),
           { ...d, uid: state.user.uid, serverAt: fb.serverTimestamp() });
       } else {
         const r = read(RES_KEY, []).find(x => x.id === item.id);
@@ -234,9 +240,13 @@ export async function pullDemands({ timeoutMs = 5000 } = {}){
     const fb = await import('./firebase.js');
     const q = fb.query(fb.collection(fb.db, 'demands'), fb.where('status', '==', 'open'));
     const snap = await fb.getDocs(q);
-    const cloud = snap.docs.map(d => ({ id: d.id, ...d.data(), mine: false }));
+    const cloud = snap.docs.map(d => ({ ...d.data(), id: d.id, mine: d.data().uid === state.user?.uid }));
     const byId = new Map(read(KEY, []).map(d => [d.id, d]));
-    for (const c of cloud) if (!byId.has(c.id)) byId.set(c.id, c);
+    for (const c of cloud) {
+      const legacy = snap.docs.find(x => x.id === c.id)?.data()?.id;
+      if (legacy && legacy !== c.id) byId.delete(legacy);
+      byId.set(c.id, c);
+    }
     write(KEY, [...byId.values()]);
     return { ok: true, count: cloud.length };
   } catch (e){ return { ok: false, error: e.message }; }

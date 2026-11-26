@@ -13,7 +13,7 @@ import { revealView, animate, ease, prefersReduced } from "./motion.js";
 import { show, toast, loadingHTML, setDemoBanner, setDemoBannerText, setUserChip, showApp, hideApp } from "./ui.js";
 import { renderAuth, renderVerification, initAuth, logout } from "./auth.js";
 import { renderHaat, preloadHaats } from "./haats.js";
-import { openFeedback, loadFeedback, feedbackText } from "./feedback.js";
+import { openFeedback } from "./feedback.js";
 import { renderRegister } from "./register.js";
 import { renderProfile } from "./profile.js";
 import { loadCrops, renderSeason, seasonSummary, CROPS } from "./crops.js";
@@ -247,33 +247,9 @@ async function boot(){
       revealView(document.getElementById('view-' + b.dataset.view));
       if (b.dataset.view === 'assistant') window.kmRepaintAssistant?.();
     }));
-  // Field-test feedback: one tap from the More sheet, and a viewer so the tester
-  // can send everything to me on WhatsApp when he is back on the road.
+  // Feedback is stored on this device. It does not send anything automatically.
   const fbBtn = document.getElementById('feedbackBtn');
   if (fbBtn) fbBtn.onclick = () => openFeedback();
-  const fbView = document.getElementById('feedbackViewBtn');
-  if (fbView) fbView.onclick = () => {
-    const list = loadFeedback();
-    const txt = feedbackText();
-    const host = document.createElement('div');
-    host.innerHTML = `<div class="card km-sheet" style="position:fixed;inset:auto 0 0 0;z-index:9999;margin:0;
-        border-radius:20px 20px 0 0;padding:18px 16px 26px;background:var(--surface);max-height:80vh;overflow:auto;
-        box-shadow:0 -12px 40px rgba(0,0,0,.25)">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <b style="color:var(--green-900)">Test feedback (${list.length})</b>
-        <button id="fbvClose" style="border:0;background:transparent;font-size:22px">×</button></div>
-      ${list.length ? `<pre style="white-space:pre-wrap;font-size:13.5px;margin-top:12px">${txt.replace(/</g,'&lt;')}</pre>
-        <button class="btn" id="fbvCopy" style="width:100%;margin-top:10px">Copy — WhatsApp pe bhejo</button>`
-        : '<div class="statlabel" style="margin-top:12px">Abhi kuch nahi. Kisan se poochho, phir "Kuch kehna hai?" dabao.</div>'}
-    </div>`;
-    document.body.appendChild(host.firstElementChild);
-    document.getElementById('fbvClose').onclick = () => host.remove();
-    const copy = document.getElementById('fbvCopy');
-    if (copy) copy.onclick = async () => {
-      try { await navigator.clipboard.writeText(txt); toast('Copy ho gaya'); }
-      catch { toast('Copy nahi hua — screenshot le lo.'); }
-    };
-  };
 
   document.getElementById('logoutBtn').onclick = () => {
     // A guest has no session to end — the same button should offer one instead.
